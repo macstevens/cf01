@@ -606,4 +606,59 @@ Equivalent Representation
 
 
 
+-------------------------------------------------------------------------------
+
+
+File Format: Extend SUO-KIF to represent relationships between sections of
+another file
+
+  file func_ab.c
+  +-------------------------------------------------+
+01|/* function A */                                 |
+02|void int func_a(int i, int j, int k)             |
+03|{                                                |
+04|  int p = abs(i + j);                            |
+05|  int q = j + 2 * k;                             |
+06|  while (q > p)                                  |
+07|  {                                              |
+08|     p *= 2;                                     |
+09|     q -= p;                                     |
+10|  }                                              |
+11|  return q;                                      |
+12|}                                                |
+13|                                                 |
+14|void int func_b(int i, int j, int k)             |
+15|{                                                |
+16|  int a_ijk = func_a(i, j, k);                   |
+17|  int a_jik = func_a(j, i, k);                   |
+18|  int a_kji = func_a(k, j, i);                   |
+19|  return (a_ijk > a_jik) ? a_kji*a_kji : a_kji;  |
+20|}                                                |
+21|                                                 |
+  +-------------------------------------------------+
+
+  image_func_ab.jpg
+  +---------------------------
+  |
+  |
+  |
+
+
+  file rel.cf
+  +--------------------
+  | (instance integer_variable var_1)
+  | (instance integer_variable var_2)
+  | (instance integer_variable var_3)
+  | (var_1 location func_ab.c:line16+6:line16+11)
+  | (var_1 name "a_ijk")
+  | (var_1 comment "this is the first variable")
+  | (shape1 -- rectangular area of image_func_ab.jpg)
+  | (relationship <unstated relation> shape1 var1)
+  | 
+  
+
+
+
+
+
 
