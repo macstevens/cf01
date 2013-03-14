@@ -6,6 +6,9 @@ C Flat
 Capabilities:
 * Test that two different procedures produce the same result.  When they don't, analyze sub-procedures that should produce the same result, automatically narrowing down the area where they diverge.
 
+* Test that two versions (DEBUG/RELEASE) of a program produce the same sequence of states -- zero in on divergence
+
+* Test that two separate runs of same program produce the same sequence of states -- zero in on divergence
 
 *Automatic Unit Test
 
@@ -102,11 +105,12 @@ No local variables.
 Only class member variables.
 No member functions.
 Only global functions of the form void F(X).
-No operator overloading
+No operator overloading, in fact, no operators at all
 No virtual functions
 No inheritance
 No other subtle tricks
 Every function and class is a template
+
 
 
 
@@ -145,3 +149,17 @@ Not just pass/fail assertions.  Also, suggestions (of possible errors, or of thi
 
 
 Automatically test the envelope of limits on input & output
+
+
+
+
+Explicit object ownership
+B b;
+A *a = new A();
+b owns a; // 'owns' is keyword
+
+Compiler can detect memory leaks by un-owned pointers passing out of scope.
+
+Garbage collection/memory defragmentation, etc. OK, but all explicit.  
+
+
