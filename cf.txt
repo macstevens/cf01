@@ -204,7 +204,49 @@ File + zipped file + way to keep them in sync.
 
 
 
+Firewalls/Watertight Chambers
+Each program is divided into semi-independent sections that can be shut down, memory cleared, etc. with minimal effect on the rest of the program.  Each section may be sub-divided.  That way, when something crashes, the minimal amount of program has to be shut down.
 
+
+
+
+
+Organizing Data In Blocks
+Reason: parallel processing, split giant blocks of data into smaller blocks for processing by several processors
+Ideas:
+Each block has a revision number.  Bigger blocks may also have a time stamp giving when they were last updated.  Some blocks may have a lock.
+Equivalent blocks: compressed version, indexed version
+Comparison functions: compare blocks, merge blocks.
+One block may contained a summarized version of many sub-blocks and pointers to those sub-blocks.
+
+
+Prediction & Estimation
+predict what major steps are coming up & and amount of time and CPU effort and memory and other resources are required.
+When crashed and demanding user OK or specific choices, try to predict what future choices are to be made and whether user can approve of all at once or some group of choices at once.
+
+
+
+No hidden functions & transformations.  In C++ "a=b;" might mean "a = ConvertBToA(b);"  All such transformations are viewable by expanding the current section of code into it's sub-parts.
+
+No hidden parts of objects.  Virtual function table pointers, etc. are all viewable.
+
+
+
+
+Convenience tends to kill modularity.  For example, deep in an algorithm, you want to pop up a message box with a warning.  So the algorithm now depends on the GUI.  To solve this, layers of interpreters could link the two together.  if (there is a GUI) then { pop open a message box:  Windows code: { .... }  Mac OSX code: { ... } default code: { ... }
+
+
+
+
+method for naming and tracking strings and other sub-products through the system.  Sometimes, it's not clear where a message came from.  Need to trace back to the source for debugging.
+
+
+reduce waste  (Ockham's Razor, Toyota Way)
+  - waste during programming/debugging
+  - waste in exchanging money beteen programmer and user
+  - waste in reporting & fixing bugs
+  - waste in documentation
+  - waste in exchanging ideas  (non-disclosure agreements)
 
 
 
