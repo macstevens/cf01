@@ -1,4 +1,33 @@
-C Flat
+                                  C   F L A T 
+
+    Here is my vision of computer programming.  In part, it is a reaction 
+against vendor lock-in, implementation hiding, advertised but unfulfilled 
+interoperability, etc. that I associate with Microsoft .NET and C Sharp.  As of
+now (2012), I regard C as the most elegant, most easily understood, most
+portable, and for many applications the most popular language above assembly.
+Efforts to replace C altogether or build a higher-level language on top of C
+have failed to match the success that C has achieved in replacing assembly.
+Part of my vision is to build on top of C, including an editing tool that allows
+a view of the source code such that any loop or conditional code sub-block is
+treated as a function call.  In this view, every function is a flat sequence of
+instructions.  Hence the name, C Flat.
+
+    I don't claim that any of this is original.  Some is certainly not.  But
+after working 11 years programming in C++ for Formfactor, Inc., I have not
+seen these ideas practically integrated anywhere.  If any of this is original,
+I view it as a part of the language / artificial intelligence work I claimed
+when I began working there, and it is too general to be directly related to
+Formfactor's business, so it is not the property of Formfactor.  Though only
+in brainstormed note form, I am making this public now.  I would like C Flat to
+proceed as an open source project.  Actually this is a series of projects, some
+of which I would like to find an existing open source project to build from
+rather than starting from scratch.  I will license it (e.g., GPL) if and when
+that becomes appropriate.
+
+Mac Stevens
+12 August 2012
+
+--------------------------------------------------------------------------------
 
 
 
@@ -26,6 +55,66 @@ auto-version control/delete queue
 
 source code directory structure automatically managed
 dependencies, equivalences, other relations -- automatically managed
+
+
+
+
+
+
+Solidworks: Objects & Relations
+- Require minimum input from user
+- [Edit Parameters/Preview, then Submit] Pattern
+
+
+
+Grammar/Sentence Structure/Relations/Sentence Diagrams
+- noun + verb
+- noun + verb + indirect object + direct object
+- (noun+adjective) + verb
+
+
+
+
+Example of setting a condition/restriction on a block of code:
+
+CODE BLOCK:
+void SPIClass::begin() {
+
+pinMode(SCK, OUTPUT);
+pinMode(MISO, INPUT);
+pinMode(MOSI, OUTPUT);
+pinMode(SS, OUTPUT); // 1 set SS pin as output mode
+
+digitalWrite(SCK, LOW);
+digitalWrite(MOSI, LOW);
+digitalWrite(SS, HIGH);
+
+SPCR |= _BV(MSTR);
+SPCR |= _BV(SPE); // 2 enable SPI
+}
+
+
+Set relation:
+[CODE SUB-BLOCK 1] <MUST_PRECEDE> [CODE SUB-BLOCK 2] <REASON> ["Important in this example is the setting of the SS pin as output pin. This has to be done before the SPI is enabled in master mode. Enabling the SPI while the SS pin is still configured as an input pin would cause the SPI to switch to slave mode immediately if a low level is applied to this pin. This pin is always configured as an input pin in slave mode (see Figure 2-7 on page 11)." - ]
+
+
+
+
+More example relations:
+
+comment:
+[CODE SUB-BLOCK 1] <COMMENT> ["set SS pin as output mode"]
+
+
+serial sequence:
+[CODE SUB-BLOCK 1] [CODE SUB-BLOCK 2] [CODE SUB-BLOCK 3] ... [CODE SUB-BLOCK N]
+
+
+
+
+
+
+
 
 
 
@@ -188,6 +277,9 @@ When the computer is not busy with assigned tasks, it does tasks it expects to b
 
 
 
+Handle Faulty Compiler
+Sometimes the compiler gives a very unhelpful error message.  By doing a binary search, feeding the compiler different portions of the source code, this can be handled.  The exact portion of the code causing the compiler to complain and whether or not the compiler is not giving repeatable error messages, can be determined.
+
 
 
 Alternate Functions
@@ -247,6 +339,269 @@ reduce waste  (Ockham's Razor, Toyota Way)
   - waste in reporting & fixing bugs
   - waste in documentation
   - waste in exchanging ideas  (non-disclosure agreements)
+
+
+for every function/action/procedure, there are standard ways to define how much resources (time, memory, etc.) are estimated to be needed to complete it.
+
+
+
+You have a variable or some structure.  Then you have all kinds of data about it.  Really, it's just a block of memory.  Then, there's its type, which is how it's supposed to be interpreted.  Then there's comments, assertions, invariants, etc.  There's data that's always true (it's type), then there's temporary data (is it initialized, is it de-allocated, etc.)  There are various standard functions and queries : copy, debug dump, graphical display, comparison, hash, save/load, etc.  The way all this data is managed should be standardized.  Similarly for functions/procedures.
+
+
+
+
+Reducing waste.  Re-use existing languages and programs and libraries.  Make translators for any new language.  View the C-flat project as a series of small improvements, not a giant change.  Minimize requirements, minimize the difficulty of a new user, not for the purpose of trapping the user, but because it's the right way.
+
+
+
+Right now in C++, there's no way to make an assertion that says, this condition is wrong/maybe wrong/always wrong/sometimes wrong, but continue anyways, and if I'm debugging, flag it, or otherwise take statistics on it.
+
+There's no way to estimate how long a procedure takes, and to judge what procedure to do, based on this estimate.
+
+There's no way to state that another function is done just to give info on another function, just for debugging.
+
+There's no way to cleanly break, with options: break NOW, break and do minimal clean up, break and do normal clean up.  break and save where you are for re-running.
+
+
+I need help tracking objects, when they were changed, etc.
+
+
+I need a better way to deal with changing standards.  Set up some file format quick & dirty, then try to improve and you get stuck.  version number + time = complete version number.
+
+
+
+c-flat / debugging file formats:
+* http://www.ibm.com/developerworks/opensource/library/os-debugging/index.html?ca=drs-
+* something based on CLIPS?
+
+
+
+
+
+
+Gannt Chart
+http://en.wikipedia.org/wiki/Gantt
+
+Work Breakdown Structure
+http://en.wikipedia.org/wiki/Work_breakdown_structure
+
+
+Geir Isene WOIR chart
+
+
+
+A way to market your code/function:  When programming, you want to search for a function, you search by input/output spec.  All the functions (in the world) are available, some free, some cost.  Some use more memory, but are faster.  Some are better tested, etc.  You can pick one as standard to put into your program, but later it can be swapped.  When you publish your code, and the user is finally using it, the user can also swap out the functions inside of yours, etc, by paying more money.  
+
+
+
+
+Every text string shown to the user, every icon, every pop-up, etc. can be considered a communication.  Each communication has a source, a chain of occurrences which led to it happening.  The user could potentially respond to each communication.  The user's response might be:
+  - this is a bug  (I'll pay $.05) to have it fixed
+  - this is a great feature
+  - I don't understand
+  - how do I get rid of this/ hide this/ silence this/ snooze this?
+
+The response could be logged and sent back to the authors of the relevant code or the owners of that code
+
+
+
+
+
+
+
+
+Find the basic concepts.  Find the basic ideas.  Organize ideas.  Be able to translate an idea from the Bible to the Koran to ... anyone's frame of reference.  Find common ideas and differing ideas.  Have a way to share ideas.  Keep track of the best lessons, the most effective presentations of an idea, the best definitions, slide presentations, movies, etc. that best communicate an idea.  
+
+
+
+
+Debugging:  need the ability to track changes to a portion of the data.  Treat objects or groups of objects as a database record.  Monitor when the record was changed to help determine when the state went invalid, or verify that it was never initialized, etc.
+
+
+built into the language: time limits on a function.  After time A, start reporting progress.  After time B, exit with failure.  Time limit could be a function of input data.  If less than 2 seconds, proceed.  If more than 2 seconds, refine completion estimate.  If after 10 seconds, refine completion estimate, get approval for more time, etc.
+
+
+Method for Debugging/Adding Feature.  In area where feature is missing, or bug exists, add redundancy, "scaffolding", "scar tissue", workarounds, debug diagnostics, etc.   Attempt to subdivide problem (new feature), or isolate problem (bug).  Repeat until problem area small enough to determine longer term solution.  Some redundancy may be necessary permanently.  A unit test is the extreme of this, where most of the code is "scaffolding".
+
+
+Verify pointers still point to valid memory.
+
+
+Debug Cycle
+1. Enable more assertions.
+2. Re-run.
+3. Narrow trouble area. return to 1 or,
+4. Fix root cause.
+5. Store new unit tests
+6. Re-run increasingly bigger tests
+
+
+
+Object Hash -> detect change in sequence on runs that should have same results -> isolate code producing variable results.
+
+View Data
+
+Auto-Manage Assertions.
+
+
+
+All programs/subroutines are like business organizations and need to: predict resources needed, subdivide tasks, report on progress, etc.
+
+
+Instead of hiding the internal memory details, as does C# or Java, instead a compiler warning could be issued for unnecessarily accessing internal details.  A quality metric for the program could be a measurement of excessive dependencies, this being one of them.  Or, alternate equivalent functions could exist which don't depend on internal details, but are perhaps less efficient.  Also, assertions could exist to verify that assumptions of internal details are valid.  Assert(CPU == PowerPC);  Assert(memory model == ... );   if (memory model == A) { ... } else { ... }
+
+
+
+
+Compare one run (bug) with another run (no bug) and compare, find similarities and differences to isolate where the bugged code went wrong.
+
+
+
+
+c-flat language: no variables.  unambiguous way to label any value of any function call of any point in any call stack in the program, or in any program running on any computer, for that matter.
+  i = i + 1;  // C language
+  i_[343] = i_[342] + 1; // C-flat language
+  i_[343][process300][computer 192.0.0.15] = i_[342][process300][computer 192.0.0.15] + 1; // C-flat language
+
+
+
+
+
+Operator overloading in C++ obscures that actually a function is being called.  Function overloading (by different parameters, etc.) obscures that different functions are being called.
+
+
+
+
+Network Linking, Redundant Linking
+Instead of relying on a single link between objects or concepts, a network of redundant links and clues allow the links to be repaired later when information is lost.
+
+
+
+
+
+Implied State, Made Explicit
+Sometimes it helps to have an enumerated variable that indicates state.  There is always some state for each sequence point in a function/procedure.  For debugging, it can help to update a state variable which can be omitted or implied when not debugging.
+
+
+
+
+Extra Variables, only for viewing and debugging.
+
+
+http://clang.llvm.org/
+http://llvm.org/
+
+Abstract Syntax Tree  http://en.wikipedia.org/wiki/Abstract_syntax_tree
+Parse Tree, Concrete Syntax Tree   http://en.wikipedia.org/wiki/Concrete_syntax_tree
+http://en.wikipedia.org/wiki/Abstract_semantic_graph
+
+Ontology  http://en.wikipedia.org/wiki/Ontology
+http://en.wikipedia.org/wiki/Ontology_(computer_science)
+
+
+
+
+
+
+
+Drilling down into the meaning or alternate representation of a  
+statement in a computer program is similar to defining the words and  
+symbols in any writing.
+
+c-flat tools need not limit themselves to a particular language.   
+Ideally cf tools would work well for English.
+
+
+
+
+
+
+-------WRITTEN NOTES-------
+
+Programmer Expert System
+  Expert System: CLIPS
+  http://clipsrules.sourceforge.net/index.html
+  http://sourceforge.net/projects/clipsrules/files/CLIPS/6.30/
+
+Interpreter
+Preprocessor
+Compiler
+Linker
+
+Version Control
+
+ +-----+   pass tests   +------+
+ |     |--------------->|      | 
+ | DEV |                | GOOD |
+ |     |<---------------|      |---->+--------+     +--------+     +--------+
+ +-----+  merge others' +------+<----|        |---->|        |---->|        |
+            changes                  | GROUP  |     | GROUP  |     |   ...  |
+                                     |  DEV   |     |  GOOD  |     |        |
+ +-----+                +------+---->|        |<----|        |<----|        |
+ |     |--------------->|      |<----+--------+     +--------+     +--------+
+ | DEV |                | GOOD |
+ |     |<---------------|      |
+ +-----+                +------+
+
+known good versions
+back out bad changes
+
++-profiling -- coverage -- automatic unit test & regression test selection
+| automatic local control
+|debug code
+| memory leak checker
+| preconditions -- integrated with unit tests
+| postconditions -- integrated with unit tests
+| automatic local control
+| trace (printf) -- automatic divide and conquer search for crash and for bug 
+|   => create unit test
+|
+|known good points of execution
+| input /save button/environment
+|code management
+| database
+| purpose
+| precondtions
+| postconditions
+| alternate functions/classes
++-action/call stack
+
+object invariants/states
+
+code optimizer
+ find high-traffic code
+  try to optimize
+  flag for optimization
+ find memory-intensive objects
+  try to optimize
+
+----------------------------
+
+
+
+
+
+C Flat Data Schema
+
+Instruction:
+  (single C statement causing some action, as opposed to data declaration)
+
+Sequence Point:
+
+Instruction Sequence:
+  Sequence Point
+  Sequence Point, Instruction, Sequence Point
+  Sequence Point, Instruction, Sequence Point, Instruction, Sequence Point
+  etc.
+
+Comment
+  A note of any type related to an Instruction Sequence
+
+Equivalent Representation
+  A comment or block of code or image, etc. that is equivalent in some way to an Instruction Sequence.
+  "++i;" <==> "i=i+1" <==> "Increment i" <==> [.gif] <==> [generated assembly code]
+
+
 
 
 
