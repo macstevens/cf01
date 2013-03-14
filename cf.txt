@@ -1,3 +1,98 @@
+C Flat
+
+
+
+
+Capabilities:
+* Test that two different procedures produce the same result.  When they don't, analyze sub-procedures that should produce the same result, automatically narrowing down the area where they diverge.
+
+
+*Automatic Unit Test
+
+
+
+
+
+Equivalent Functions
+Equivalent Functions in different languages: English, C++, assembly, machine,
+Drawings, diagrams, documentation -- explicitly related to other documentation and code
+functions related to other functions-- cut, paste, & customize
+
+
+auto-version control/delete queue
+
+source code directory structure automatically managed
+dependencies, equivalences, other relations -- automatically managed
+
+
+
+
+auto-tuning
+  Current C++ coding methodology requires fixing object sizes at compile time.  There is often a memory/performance trade-off determining number of bits used for an integer, and other pre-allocated objects.  Many other algorithm choices are pre-configured.  This could be tuned against the problem at hand.  A standard pre-configured dll could have the best default settings.  Several other pre-configured dll's could have other settings, easily swapped in.  Finally, if the runtime is too long, the auto-tuner could evaluate the slow spots and re-compile a special-purpose dll for the current problem.
+
+
+
+semi-assertions, dynamic check enabling
+  Some conditions are possible errors (warnings), some are always errors.  Some checks take too long to run to be enabled in every place they apply.  The programming/runtime environment should be able to disable and enable various checks to zero-in on problems when needed, and regulate the quantity and sequence of error messages presented to the user/programmer.
+
+
+Competitive/Non-competitive,   Secret/Public,   for-profit/open-source
+Programmers deserve compensation for their work.  Users should pay for benefit received.  True information, helpful programs, should be spread as broadly as possible.  A programmer, or engineer, or any worker, should not need the support of an entire corporation, with its inherent restrictions, to be compensated for his work.
+
+
+
+Code Units, Compilation Units
+  Currently code is stored in files.  Each file is compiled as a whole.  Instead, code should be managed by a database.  The function or smaller code block could be the basic unit.  These could be assembled into files and sent to the compiler.  For editing, similar grouping could be done.  Much unnecessary re-compilation is currently done for changes to comments or other dis-related sections of code.
+
+Explicit temporary variables
+
+Explicit sequence points
+
+Explicit function calls
+  -constructors
+  -destructors
+  -start-up functions
+  -exception? ? goto
+  -function sequence within boolean expression: 
+    if ((A() && B()) || C())
+    -> A(&boolA)
+       (boolA) ?
+          G(bool_if) :
+          H(bool_if);
+          ...
+
+
+
+Strict C-flat
+  no global variables
+  no local variables
+  no temporary variables
+  all functions void
+  function = class
+  no embedded loops
+  loop body = function
+  goto!
+
+
+constify, unconstify -- make a variable a const, after initialization or just for a certain section
+
+
+auto- code organization
+
+multiple views of single line of code:
+  expanded to multiple lines
+  various graphical representations
+  
+
+
+GUI
+Ptolemy project, EECS, UC Berkeley
+Hugo Andrade, National Instruments, hugo.andrade@ni.com
+
+
+
+
+
                         C FLAT
 
 C Flat, also known as Factored C, is an extension of C++.
@@ -7,6 +102,11 @@ No local variables.
 Only class member variables.
 No member functions.
 Only global functions of the form void F(X).
+No operator overloading
+No virtual functions
+No inheritance
+No other subtle tricks
+Every function and class is a template
 
 
 
