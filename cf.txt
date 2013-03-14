@@ -64,7 +64,8 @@ Explicit function calls
           H(bool_if);
           ...
 
-
+explicit state
+  - often, state is implicit, indicated by the current call stack, or current sequence point.  There should be a way to explicitly record the state in variables that need not be present in release builds.
 
 Strict C-flat
   no global variables
