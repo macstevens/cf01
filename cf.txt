@@ -90,7 +90,7 @@ multiple views of single line of code:
 
 
 auto-learning common bugs
-  As each bug is fixed, however small, the programmer can categorize the problem.  Maybe the problem was simply that the function was never implemented, or whatever.  Then the IDE starts to learn that un-implemented functions sometimes cause bugs and can start to flag them as warnings when user is debugging and searching for the cause of the bug.
+  As each bug is fixed, however small, the programmer can categorize the problem.  Maybe the problem was simply that the function was never implemented, or whatever.  Then the IDE starts to learn that un-implemented functions sometimes cause bugs and can start to flag them as warnings when user is debugging and searching for the cause of the bug
   
 
 
@@ -166,6 +166,47 @@ b owns a; // 'owns' is keyword
 
 Compiler can detect memory leaks by un-owned pointers passing out of scope.
 
-Garbage collection/memory defragmentation, etc. OK, but all explicit.  
+Garbage collection/memory defragmentation, etc. OK, but all explicit.
+
+
+
+
+
+
+
+Minimal Assumptions/Occam's Razor
+C flat has many layers of rules and restrictions.  At the bottom, anything goes -- no rules.  On top of this is a system that allows rules to be customized.  On top of this are more rules.  ... At the top is specific data.  The reason for this is that any particular language or programming style should not be outlawed unless there is a reason for prohibiting it.  There should be a way to clearly define freedoms and restrictions for the group and for the individual.
+
+
+
+
+
+
+Preemptive Action
+When the computer is not busy with assigned tasks, it does tasks it expects to be assigned -- all types of tasks
+
+
+
+
+
+
+Alternate Functions
+Multiple functions with equivalent or exactly equal results.  Computer can choose which to use, to optimize.  Also, functions or ways to get info on the efficiency (time & memory) of a function based on input data or no input data.
+
+
+
+
+
+Alternative data representations.
+File + zipped file + way to keep them in sync.
+.obj files put together into various combinations of .dlls and static libs, so that minimal incremental re-compilation and linking is needed for the edit-compile-test cycle.
+
+
+
+
+
+
+
+
 
 
