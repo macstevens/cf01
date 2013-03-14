@@ -86,6 +86,11 @@ auto- code organization
 multiple views of single line of code:
   expanded to multiple lines
   various graphical representations
+
+
+
+auto-learning common bugs
+  As each bug is fixed, however small, the programmer can categorize the problem.  Maybe the problem was simply that the function was never implemented, or whatever.  Then the IDE starts to learn that un-implemented functions sometimes cause bugs and can start to flag them as warnings when user is debugging and searching for the cause of the bug.
   
 
 
