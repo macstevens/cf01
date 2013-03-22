@@ -38,7 +38,6 @@ typedef struct
 } cf00_str_vec;
 
 
-typedef struct cf00_object_list;
 
 typedef struct
 {
@@ -51,6 +50,8 @@ typedef struct
 {
     cf00_object_type m_object_type;
     cf00_object_list m_reverse_pointer_list;
+    /*  pointer to free-chain owner */
+    /*  pointer to free-chain next */
 } cf00_object;
 
 
@@ -63,13 +64,7 @@ typedef struct
     
 } cf00_procedure;
 
-typedef struct
-{
-    cf00_object m_object_data; /* must be first */
 
-
-
-} cf00_relation;
 
 typedef struct
 {
@@ -94,3 +89,83 @@ typedef struct
     
   
 } cf00_file_data;
+
+typedef struct
+{
+    cf00_object m_object_data; /* must be first */
+    cf00_file_data *m_file_data;
+    uint64 m_section_begin_pos;
+    uint64 m_section_end_pos;   
+  
+} cf00_file_sub_section_a;
+
+
+typedef struct
+{
+    cf00_object m_object_data; /* must be first */
+    cf00_file_data *m_file_data;
+    uint64 m_section_begin_pos;
+    uint64 m_section_end_pos;   
+    cf00_string m_first_bytes;
+    cf00_string m_last_bytes;
+    uint32 m_begin_line_index;
+    uint32 m_end_line_index;
+    uint16 m_begin_line_offset;
+    uint16 m_end_line_offset;
+    uint32 m_adler_32_sum;
+} cf00_file_sub_section_b;
+
+
+typedef enum
+{
+    CF00_RT_NONE = 0,
+
+    /* attribute (one-way relation, so to speak) */
+
+    /* binary relation */
+    CF00_RT_PREV_NEXT,
+    CF00_RT_BEFORE_AFTER,
+
+    /* ternary relation */
+
+    /* n-way relation */
+
+    CF00_RT_COUNT
+} cf00_relation_type;
+
+
+typedef struct
+{
+    cf00_object m_object_data; /* must be first */
+    cf00_relation_type m_relation_type; /* must be second */
+    void *m_object_0;
+} cf00_unary_relation;
+
+typedef struct
+{
+    cf00_object m_object_data; /* must be first */
+    cf00_relation_type m_relation_type; /* must be second */
+    void *m_object_0;
+    void *m_object_1;
+} cf00_binary_relation;
+
+
+typedef struct
+{
+    cf00_object m_object_data; /* must be first */
+    cf00_relation_type m_relation_type; /* must be second */
+
+    void *m_object_0;
+    void *m_object_1;
+    void *m_object_2;
+
+} cf00_ternary_relation;
+
+
+
+
+
+
+
+
+
