@@ -35,19 +35,65 @@ typedef enum
     CF00_RPCT_COUNT
 } cf00_reverse_pointer_container_type;
 
+struct cf00_string_allocator;
+
 typedef struct
 {
-    void *m_allocator;
+    struct cf00_string_allocator *m_allocator;
     char *m_buffer;
     uint32 m_length;
+    uint32 m_capacity;
 } cf00_string;
 
 typedef struct
 {
-    void *m_allocator;
+    struct cf00_string_allocator *m_allocator;
     cf00_string *m_buffer;
     uint32 m_length;
+    uint32 m_capacity;
 } cf00_str_vec;
+
+typedef enum { CF00_ALLOC_BLOCK_SIZE_A = 0x1FE0 } cf00_alloc_block_sz;
+
+typedef struct
+{
+    uint8 m_raw_memory[CF00_ALLOC_BLOCK_SIZE_A];
+    struct cf00_alloc_block_a *m_next_alloc_block;
+} cf00_alloc_block_a; 
+
+typedef struct
+{
+    struct cf00_alloc_block_a *m_alloc_block_chain;
+    char *m_free_chain_char_buf_16;
+    char *m_free_chain_char_buf_32;
+    char *m_free_chain_char_buf_64;
+    char *m_free_chain_char_buf_128;
+    char *m_free_chain_char_buf_256;
+    char *m_free_chain_char_buf_512;
+    cf00_string *m_free_chain_string;
+    cf00_string *m_free_chain_string_ptr_array_4;
+    cf00_str_vec *m_free_chain_str_vec;
+} cf00_string_allocator;
+
+void cf00_init_string_allocator(cf00_string_allocator *a);
+void cf00_clear_string_allocator(cf00_string_allocator *a);
+char *cf00_allocate_char_buf_16(cf00_string_allocator *a);
+char *cf00_allocate_char_buf_32(cf00_string_allocator *a);
+char *cf00_allocate_char_buf_64(cf00_string_allocator *a);
+char *cf00_allocate_char_buf_128(cf00_string_allocator *a);
+char *cf00_allocate_char_buf_256(cf00_string_allocator *a);
+char *cf00_allocate_char_buf_512(cf00_string_allocator *a);
+cf00_string *cf00_allocate_string(cf00_string_allocator *a);
+cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a);
+void cf00_free_char_buf_16(cf00_string_allocator *a, char *buf);
+void cf00_free_char_buf_32(cf00_string_allocator *a, char *buf);
+void cf00_free_char_buf_64(cf00_string_allocator *a, char *buf);
+void cf00_free_char_buf_128(cf00_string_allocator *a, char *buf);
+void cf00_free_char_buf_256(cf00_string_allocator *a, char *buf);
+void cf00_free_char_buf_512(cf00_string_allocator *a, char *buf);
+void cf00_free_string(cf00_string_allocator *a, cf00_string *s);
+void cf00_free_str_vec(cf00_string_allocator *a, cf00_str_vec *sv);
+
 
 typedef void *cf00_void_ptr_array3[3];
 
