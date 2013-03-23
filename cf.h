@@ -1,4 +1,4 @@
-/** cf.c
+/** cf.h
 
 This file is C source code for parsing and manipulating a C-flat program
 */
@@ -37,31 +37,34 @@ typedef enum
 
 struct cf00_string_allocator;
 
-typedef struct
+typedef struct cf00_string
 {
     struct cf00_string_allocator *m_allocator;
-    char *m_buffer;
+    char *m_char_buf;
     uint32 m_length;
     uint32 m_capacity;
 } cf00_string;
 
-typedef struct
+void cf_00_string_init(cf00_string *s);
+void cf_00_string_clear(cf00_string *s);
+
+typedef struct cf00_str_vec
 {
     struct cf00_string_allocator *m_allocator;
-    cf00_string *m_buffer;
+    cf00_string *m_str_array;
     uint32 m_length;
     uint32 m_capacity;
 } cf00_str_vec;
 
 typedef enum { CF00_ALLOC_BLOCK_SIZE_A = 0x1FE0 } cf00_alloc_block_sz;
 
-typedef struct
+typedef struct cf00_alloc_block_a
 {
     uint8 m_raw_memory[CF00_ALLOC_BLOCK_SIZE_A];
     struct cf00_alloc_block_a *m_next_alloc_block;
 } cf00_alloc_block_a; 
 
-typedef struct
+typedef struct cf00_string_allocator
 {
     struct cf00_alloc_block_a *m_alloc_block_chain;
     char *m_free_chain_char_buf_16;
@@ -72,47 +75,38 @@ typedef struct
     char *m_free_chain_char_buf_512;
     cf00_string *m_free_chain_string;
     cf00_string *m_free_chain_string_ptr_array_4;
+    cf00_string *m_free_chain_string_ptr_array_8;
+    cf00_string *m_free_chain_string_ptr_array_16;
+    cf00_string *m_free_chain_string_ptr_array_32;
     cf00_str_vec *m_free_chain_str_vec;
 } cf00_string_allocator;
 
 void cf00_init_string_allocator(cf00_string_allocator *a);
 void cf00_clear_string_allocator(cf00_string_allocator *a);
-char *cf00_allocate_char_buf_16(cf00_string_allocator *a);
-char *cf00_allocate_char_buf_32(cf00_string_allocator *a);
-char *cf00_allocate_char_buf_64(cf00_string_allocator *a);
-char *cf00_allocate_char_buf_128(cf00_string_allocator *a);
-char *cf00_allocate_char_buf_256(cf00_string_allocator *a);
-char *cf00_allocate_char_buf_512(cf00_string_allocator *a);
 cf00_string *cf00_allocate_string(cf00_string_allocator *a);
 cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a);
-void cf00_free_char_buf_16(cf00_string_allocator *a, char *buf);
-void cf00_free_char_buf_32(cf00_string_allocator *a, char *buf);
-void cf00_free_char_buf_64(cf00_string_allocator *a, char *buf);
-void cf00_free_char_buf_128(cf00_string_allocator *a, char *buf);
-void cf00_free_char_buf_256(cf00_string_allocator *a, char *buf);
-void cf00_free_char_buf_512(cf00_string_allocator *a, char *buf);
-void cf00_free_string(cf00_string_allocator *a, cf00_string *s);
-void cf00_free_str_vec(cf00_string_allocator *a, cf00_str_vec *sv);
+void cf00_free_string(cf00_string *s);
+void cf00_free_str_vec(cf00_str_vec *sv);
 
 
 typedef void *cf00_void_ptr_array3[3];
 
 
-typedef struct
+typedef struct cf00_ptr_list_node
 {
     void *m_ptr;
     struct cf00_ptr_list_node *m_prev;
     struct cf00_ptr_list_node *m_next;
 } cf00_ptr_list_node;
 
-typedef struct
+typedef struct cf00_ptr_list
 {
     void *m_cf00_ptr_list_node_allocator;
     cf00_ptr_list_node *m_head;
     uint32 m_size;
 } cf00_ptr_list;
 
-typedef struct 
+typedef struct cf00_managed_object_data
 {
     cf00_managed_object_type m_object_type;
     cf00_reverse_pointer_container_type m_rev_ptr_ctr_type;
@@ -127,7 +121,7 @@ typedef struct
 
 
 
-typedef struct
+typedef struct cf00_procedure
 {
     cf00_managed_object_data m_object_data; /* must be first */
 
@@ -137,7 +131,7 @@ typedef struct
 
 
 
-typedef struct
+typedef struct cf00_time
 {
     /*  base time */
     /* enum {base_time_epoch, unix_1970_epoch} m_epoch */
@@ -146,7 +140,7 @@ typedef struct
 } cf00_time;
 
 
-typedef struct
+typedef struct cf00_file_data
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_string m_file_name;
@@ -161,7 +155,7 @@ typedef struct
   
 } cf00_file_data;
 
-typedef struct
+typedef struct cf00_file_sub_section_a
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_file_data *m_file_data;
@@ -171,7 +165,7 @@ typedef struct
 } cf00_file_sub_section_a;
 
 
-typedef struct
+typedef struct cf00_file_sub_section_b
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_file_data *m_file_data;
@@ -205,14 +199,14 @@ typedef enum
 } cf00_relation_type;
 
 
-typedef struct
+typedef struct cf00_unary_relation
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_relation_type m_relation_type; /* must be second */
     void *m_object_0;
 } cf00_unary_relation;
 
-typedef struct
+typedef struct cf00_binary_relation
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_relation_type m_relation_type; /* must be second */
@@ -221,7 +215,7 @@ typedef struct
 } cf00_binary_relation;
 
 
-typedef struct
+typedef struct cf00_ternary_relation
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_relation_type m_relation_type; /* must be second */
