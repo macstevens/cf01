@@ -23,42 +23,67 @@ typedef enum
     CF00_OT_PROCEDURE,
 
     CF00_OT_COUNT
-} cf00_object_type;
+} cf00_managed_object_type;
+
+typedef enum
+{
+    CF00_RPCT_NONE = 0,
+    CF00_RPCT_ARRAY_3,
+    CF00_RPCT_LIST,
+    CF00_RPCT_TREE,
+
+    CF00_RPCT_COUNT
+} cf00_reverse_pointer_container_type;
 
 typedef struct
 {
-    uint32 m_length;
+    void *m_allocator;
     char *m_buffer;
+    uint32 m_length;
 } cf00_string;
 
 typedef struct
 {
-    uint32 m_length;
+    void *m_allocator;
     cf00_string *m_buffer;
+    uint32 m_length;
 } cf00_str_vec;
 
+typedef void *cf00_void_ptr_array3[3];
 
 
 typedef struct
 {
-    void *m_cf00_object;
-    struct cf00_object_list *m_prev;
-    struct cf00_object_list *m_next;
-} cf00_object_list;
+    void *m_ptr;
+    struct cf00_ptr_list_node *m_prev;
+    struct cf00_ptr_list_node *m_next;
+} cf00_ptr_list_node;
+
+typedef struct
+{
+    void *m_cf00_ptr_list_node_allocator;
+    cf00_ptr_list_node *m_head;
+    uint32 m_size;
+} cf00_ptr_list;
 
 typedef struct 
 {
-    cf00_object_type m_object_type;
-    cf00_object_list m_reverse_pointer_list;
-    /*  pointer to free-chain owner */
-    /*  pointer to free-chain next */
-} cf00_object;
+    cf00_managed_object_type m_object_type;
+    cf00_reverse_pointer_container_type m_rev_ptr_ctr_type;
+    void *m_allocator;
+    union
+    {
+        cf00_void_ptr_array3 m_rev_ptr_array_3;
+        cf00_ptr_list m_rev_ptr_list;
+        /* tree */
+    };
+} cf00_managed_object_data;
 
 
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
 
     
     
@@ -77,7 +102,7 @@ typedef struct
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
     cf00_string m_file_name;
     cf00_str_vec m_relative_file_path;
     cf00_str_vec m_absolute_file_path;
@@ -92,7 +117,7 @@ typedef struct
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
     cf00_file_data *m_file_data;
     uint64 m_section_begin_pos;
     uint64 m_section_end_pos;   
@@ -102,7 +127,7 @@ typedef struct
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
     cf00_file_data *m_file_data;
     uint64 m_section_begin_pos;
     uint64 m_section_end_pos;   
@@ -136,14 +161,14 @@ typedef enum
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
     cf00_relation_type m_relation_type; /* must be second */
     void *m_object_0;
 } cf00_unary_relation;
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
     cf00_relation_type m_relation_type; /* must be second */
     void *m_object_0;
     void *m_object_1;
@@ -152,7 +177,7 @@ typedef struct
 
 typedef struct
 {
-    cf00_object m_object_data; /* must be first */
+    cf00_managed_object_data m_object_data; /* must be first */
     cf00_relation_type m_relation_type; /* must be second */
 
     void *m_object_0;
