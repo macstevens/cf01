@@ -49,7 +49,7 @@ static char *cf00_allocate_char_buf(cf00_string_allocator *a,
                 cf00_sa_allocate_block(a);
                 struct cf00_alloc_block_a *b = a->m_alloc_block_chain;
                 char *m = (char *)(&((b->m_raw_memory)[0]));
-                char *m_end = m + CF00_ALLOC_BLOCK_SIZE_A;
+                char *m_end = m + CF00_ALLOC_BLOCK_SIZE_A + 1 - capacity;
                 while (m < m_end) {
                     *((char **)m) = *free_chain;
                     /*memcpy(m, *free_chain, sizeof(*free_chain));*/
@@ -89,7 +89,7 @@ static void cf00_free_char_buf(cf00_string_allocator *a, char *buf,
         }
         else {
             /* add buf to free chain */
-            memcpy(buf, *free_chain, sizeof(*free_chain));
+            *((char **)buf) = *free_chain;
             *free_chain = buf;          
         }
     }
@@ -262,7 +262,8 @@ extern cf00_string *cf00_allocate_string(cf00_string_allocator *a)
             cf00_sa_allocate_block(a);
             struct cf00_alloc_block_a *b = a->m_alloc_block_chain;
             cf00_string *m = (cf00_string *)(&((b->m_raw_memory)[0]));
-            cf00_string *m_end = m + CF00_ALLOC_BLOCK_SIZE_A;
+            cf00_string *m_end = m + CF00_ALLOC_BLOCK_SIZE_A + 1 - 
+                sizeof(cf00_string);
             while (m < m_end) {
                 cf00_string *temp_ptr;
                 cf_00_str_init(m);
@@ -299,9 +300,8 @@ extern void cf00_free_string(cf00_string *s)
         cf00_string_allocator *a = s->m_allocator;
         if (NULL != a) {
             /* put on free chain */
-
-/* not implemented */
-
+            s->m_char_buf = (char *)(a->m_free_chain_string);
+            a->m_free_chain_string = s;
         }
         else {
             free(s);
@@ -317,17 +317,51 @@ extern void cf00_free_str_vec(cf00_str_vec *sv)
 /* dump debug information to stdout */
 void cf00_str_alloc_debug_dump(cf00_string_allocator *a)
 {
+    typedef struct {char *m_c; int m_i;} char_ptr_int;
+    const char_ptr_int char_buf_free_chn_sz[] = {
+        { a->m_free_chain_char_buf_16, 16 },
+        { a->m_free_chain_char_buf_32, 32 },
+        { a->m_free_chain_char_buf_64, 64 },
+        { a->m_free_chain_char_buf_128, 128 },
+        { a->m_free_chain_char_buf_256, 256 },
+        { a->m_free_chain_char_buf_512, 512 }
+    };
+    const size_t char_buf_free_chn_count =
+        sizeof(char_buf_free_chn_sz)/sizeof(char_buf_free_chn_sz[0]);
+
     if (NULL == a) {
         printf("NULL STRING ALLOCATOR\n");
     }
     else {
-        int block_count = 0;
+        size_t i;
+        printf("STRING ALLOCATOR\n");
+        int count = 0;
         cf00_alloc_block_a *b = a->m_alloc_block_chain;
         while (NULL != b) {
             b = b->m_next_alloc_block;
-            ++block_count;
+            ++count;
         }
-        printf("  BLOCK COUNT:%i\n", block_count);
+        printf("  BLOCK COUNT:%i\n", count);
+
+        for (i = 0; i < char_buf_free_chn_count; ++i) {
+            const char_ptr_int data = char_buf_free_chn_sz[i];
+            char *free_chain = data.m_c;
+            int char_buf_sz = data.m_i;
+            count = 0;
+            while (NULL != free_chain) {
+                free_chain = *((char**)free_chain);
+                ++count;
+            }
+            printf("  CHAR BUF[%i] FREE CHAIN SIZE:%i\n", char_buf_sz, count);
+        }
+
+        count = 0;
+        cf00_string *sfc = a->m_free_chain_string;
+        while (NULL != sfc) {
+            sfc = (cf00_string *)(sfc->m_char_buf);
+            ++count;
+        }
+        printf("  STRING FREE CHAIN SIZE:%i\n", count);
     }
 }
 
