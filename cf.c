@@ -24,14 +24,11 @@ static char *cf00_allocate_char_buf(cf00_string_allocator *a,
     const uint32 capacity)
 {
     char *char_buf = NULL;
-printf("J\n");
     if (NULL == a) {
         char_buf = (char *)malloc(capacity);
     }
     else {
         char **free_chain = NULL;
-printf("K\n");
-
         switch (capacity) {
         case  16 : free_chain =  &(a->m_free_chain_char_buf_16); break;
         case  32 : free_chain =  &(a->m_free_chain_char_buf_32); break;
@@ -41,38 +38,25 @@ printf("K\n");
         case 512 : free_chain = &(a->m_free_chain_char_buf_512); break;
         default : free_chain = NULL; break;
         }
-printf("L\n");
 
         if (NULL == free_chain) {            
             char_buf = (char *)malloc(capacity);
         }
         else {
-printf("M\n");
             if (NULL == *free_chain) {
-printf("N\n");
-printf("  capacity=%i\n", (int)capacity);
-printf("  CF00_ALLOC_BLOCK_SIZE_A=%i\n", (int)CF00_ALLOC_BLOCK_SIZE_A);
-
                 /* grow free chain */
                 assert(capacity <= CF00_ALLOC_BLOCK_SIZE_A);
                 cf00_sa_allocate_block(a);
-printf("N1\n");
                 struct cf00_alloc_block_a *b = a->m_alloc_block_chain;
-printf("N2\n");
                 char *m = (char *)(&((b->m_raw_memory)[0]));
-printf("N3\n");
                 char *m_end = m + CF00_ALLOC_BLOCK_SIZE_A;
-printf("N4\n");
                 while (m < m_end) {
                     *((char **)m) = *free_chain;
                     /*memcpy(m, *free_chain, sizeof(*free_chain));*/
                     *free_chain = m;
                     m += capacity;
-//printf("N5 %p\n", m);
                 }
             }
-printf("O\n");
-
             /* remove from free chain */
             assert(NULL != *free_chain);
             char_buf = *free_chain;
@@ -80,8 +64,6 @@ printf("O\n");
             /*memcpy(*free_chain, (*(char**)(*free_chain)), sizeof(*free_chain));*/
         }
     }
-printf("P\n");
-
     return char_buf;
 }
 
@@ -156,7 +138,6 @@ void cf_00_str_resize(cf00_string *s, const uint32 new_sz)
 
 void cf_00_str_reserve(cf00_string *s, const uint32 new_cap)
 {
-printf("A\n");
     if (NULL != s && s->m_capacity <= new_cap)
     {
         // allocate new buffer
@@ -191,10 +172,7 @@ printf("A\n");
             }
         }
         assert(new_capacity >= new_cap);
-printf("B%i\n",(int)new_capacity);
-
         char *new_buf = cf00_allocate_char_buf(s->m_allocator, new_capacity);
-printf("C%p\n",new_buf);
 
         /* copy buffer contents */
         memcpy(new_buf, s->m_char_buf, s->m_length);
@@ -208,8 +186,6 @@ printf("C%p\n",new_buf);
         s->m_char_buf = new_buf;
         s->m_capacity = new_capacity;
     }
-printf("D\n");
-
 }
 
 void cf_00_str_assign(cf00_string *dest, const cf00_string *src)
