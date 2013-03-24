@@ -45,8 +45,14 @@ typedef struct cf00_string
     uint32 m_capacity;
 } cf00_string;
 
-void cf_00_string_init(cf00_string *s);
-void cf_00_string_clear(cf00_string *s);
+void cf_00_str_init(cf00_string *s);
+void cf_00_str_clear(cf00_string *s);
+void cf_00_str_resize(cf00_string *s, const uint32 new_sz);
+void cf_00_str_reserve(cf00_string *s, const uint32 new_cap);
+void cf_00_str_assign(cf00_string *dest, const cf00_string *src);
+void cf_00_str_assign_from_char_ptr(cf00_string *dest, const char *src);
+void cf_00_str_append(cf00_string *s, const cf00_string *addition);
+void cf_00_str_append_char_buf(cf00_string *s, const char *addition);
 
 typedef struct cf00_str_vec
 {
@@ -87,6 +93,7 @@ cf00_string *cf00_allocate_string(cf00_string_allocator *a);
 cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a);
 void cf00_free_string(cf00_string *s);
 void cf00_free_str_vec(cf00_str_vec *sv);
+void cf00_str_alloc_debug_dump(cf00_string_allocator *a);
 
 
 typedef void *cf00_void_ptr_array3[3];
