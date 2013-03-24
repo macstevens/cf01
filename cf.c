@@ -52,7 +52,6 @@ static char *cf00_allocate_char_buf(cf00_string_allocator *a,
                 char *m_end = m + CF00_ALLOC_BLOCK_SIZE_A + 1 - capacity;
                 while (m < m_end) {
                     *((char **)m) = *free_chain;
-                    /*memcpy(m, *free_chain, sizeof(*free_chain));*/
                     *free_chain = m;
                     m += capacity;
                 }
@@ -61,7 +60,6 @@ static char *cf00_allocate_char_buf(cf00_string_allocator *a,
             assert(NULL != *free_chain);
             char_buf = *free_chain;
             *free_chain = *(char**)(*free_chain);
-            /*memcpy(*free_chain, (*(char**)(*free_chain)), sizeof(*free_chain));*/
         }
     }
     return char_buf;
@@ -70,6 +68,7 @@ static char *cf00_allocate_char_buf(cf00_string_allocator *a,
 static void cf00_free_char_buf(cf00_string_allocator *a, char *buf, 
     const uint32 capacity)
 {
+    assert(NULL != buf);
     if (NULL == a) {
         free(buf);
     }
@@ -104,10 +103,10 @@ static void cf00_free_char_buf(cf00_string_allocator *a, char *buf,
 
 
 
-/* cf_00_string */
+/* cf00_string */
 
 /* initialize raw memory */
-extern void cf_00_str_init(cf00_string *s)
+extern void cf00_str_init(cf00_string *s)
 {
     assert(NULL != s);
     memset (s, 0, sizeof(cf00_string));
@@ -116,27 +115,55 @@ extern void cf_00_str_init(cf00_string *s)
 /* 
 clear string
 also, prepare for freeing raw memory of struct cf00_string_allocator itself */
-extern void cf_00_str_clear(cf00_string *s)
+extern void cf00_str_clear(cf00_string *s)
 {
     if (NULL != s)
     {
-        cf00_free_char_buf(s->m_allocator, s->m_char_buf, s->m_capacity);
-        s->m_char_buf = 0;
+        if (NULL != s->m_char_buf) {
+            cf00_free_char_buf(s->m_allocator, s->m_char_buf, s->m_capacity);
+        }      
+        s->m_char_buf = NULL;
         s->m_length = 0;
         s->m_capacity = 0;
     }
 }
 
+int cf00_str_compare(const cf00_string *x, const cf00_string *y)
+{
+    int result = 0;
+    if (NULL == x) {
+        if (NULL == y) {
+            result = 0;
+        }
+        else {
+            result = -1;
+        }
+    }
+    else {
+        if (NULL == y) {
+            result = 1;
+        }
+        else {
+            const uint min_len = (x->m_length < y->m_length) ? 
+                x->m_length : y->m_length;
+            result = strncmp(x->m_char_buf, y->m_char_buf, min_len);
+            if (0 == result && x->m_length != y->m_length) {
+                result = (x->m_length < y->m_length) ? -1 : 1;          
+            } 
+        }
+    }
+    return result;
+}
 
-void cf_00_str_resize(cf00_string *s, const uint32 new_sz)
+void cf00_str_resize(cf00_string *s, const uint32 new_sz)
 {
     if (NULL != s) {
-        cf_00_str_reserve(s, new_sz+1);
+        cf00_str_reserve(s, new_sz+1);
         s->m_length = new_sz;
     }
 }
 
-void cf_00_str_reserve(cf00_string *s, const uint32 new_cap)
+void cf00_str_reserve(cf00_string *s, const uint32 new_cap)
 {
     if (NULL != s && s->m_capacity <= new_cap)
     {
@@ -173,47 +200,73 @@ void cf_00_str_reserve(cf00_string *s, const uint32 new_cap)
         }
         assert(new_capacity >= new_cap);
         char *new_buf = cf00_allocate_char_buf(s->m_allocator, new_capacity);
-
         /* copy buffer contents */
-        memcpy(new_buf, s->m_char_buf, s->m_length);
+        if (NULL != s->m_char_buf) {        
+            memcpy(new_buf, s->m_char_buf, s->m_length);
+        }
         if (new_capacity > s->m_length) {
             /* add terminating null character, if there is room */
             new_buf[s->m_length] = 0;
         }
-        
+
         /* free old buffer and update string data */
-        cf00_free_char_buf(s->m_allocator, s->m_char_buf, s->m_capacity);
+        if (NULL != s->m_char_buf) {
+            cf00_free_char_buf(s->m_allocator, s->m_char_buf, s->m_capacity);
+        }
+
         s->m_char_buf = new_buf;
         s->m_capacity = new_capacity;
     }
 }
 
-void cf_00_str_assign(cf00_string *dest, const cf00_string *src)
+void cf00_str_assign(cf00_string *dest, const cf00_string *src)
 {
-
-/* not implemented */
-
+    if (NULL != dest && NULL != src && dest != src) {
+        cf00_str_reserve(dest, src->m_length + 1);
+        memcpy(dest->m_char_buf, src->m_char_buf, src->m_length);
+        (dest->m_char_buf)[src->m_length] = 0;
+        dest->m_length = src->m_length;
+    }
 }
 
-void cf_00_str_assign_from_char_ptr(cf00_string *dest, const char *src)
+void cf00_str_assign_from_char_ptr(cf00_string *dest, const char *src)
 {
-
-/* not implemented */
-
+    if (NULL != dest) {
+        if (NULL == src) {
+            cf00_str_clear(dest);
+        }
+        else if (dest->m_char_buf != src) {
+            const uint32 len = strlen(src);
+            cf00_str_reserve(dest, len + 1);
+            memcpy(dest->m_char_buf, src, len);
+            (dest->m_char_buf)[len] = 0;
+            dest->m_length = len;
+        }
+    }
 }
 
-void cf_00_str_append(cf00_string *s, const cf00_string *addition)
+void cf00_str_append(cf00_string *s, const cf00_string *addition)
 {
-
-/* not implemented */
-
+    if (NULL != s && NULL != addition) {
+        const uint32 add_len = addition->m_length;
+        const uint32 len = s->m_length + add_len;
+        cf00_str_reserve(s, len + 1);
+        memcpy((s->m_char_buf)+(s->m_length), addition->m_char_buf, add_len);
+        (s->m_char_buf)[len] = 0;
+        s->m_length = len;
+    }
 }
 
-void cf_00_str_append_char_buf(cf00_string *s, const char *addition)
+void cf00_str_append_char_buf(cf00_string *s, const char *addition)
 {
-
-/* not implemented */
-
+    if (NULL != s && NULL != addition) {
+        const uint32 add_len = strlen(addition);
+        const uint32 len = s->m_length + add_len;
+        cf00_str_reserve(s, len + 1);
+        memcpy((s->m_char_buf)+(s->m_length), addition, add_len);
+        (s->m_char_buf)[len] = 0;
+        s->m_length = len;
+    }
 }
 
 
@@ -253,7 +306,7 @@ extern cf00_string *cf00_allocate_string(cf00_string_allocator *a)
 
     if (NULL == a) {
         str = (cf00_string *)malloc(sizeof(cf00_string));
-        cf_00_str_init(str);
+        cf00_str_init(str);
     }
     else {
         if (NULL == a->m_free_chain_string) {
@@ -266,7 +319,7 @@ extern cf00_string *cf00_allocate_string(cf00_string_allocator *a)
                 sizeof(cf00_string);
             while (m < m_end) {
                 cf00_string *temp_ptr;
-                cf_00_str_init(m);
+                cf00_str_init(m);
                 m->m_allocator = a;
                 m->m_char_buf = (char *)(a->m_free_chain_string);
                 a->m_free_chain_string = m;
@@ -296,7 +349,7 @@ extern cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a)
 extern void cf00_free_string(cf00_string *s)
 {
     if (NULL != s) {
-        cf_00_str_clear(s);
+        cf00_str_clear(s);
         cf00_string_allocator *a = s->m_allocator;
         if (NULL != a) {
             /* put on free chain */
