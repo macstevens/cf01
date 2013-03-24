@@ -59,7 +59,7 @@ typedef struct cf00_str_vec
 {
     struct cf00_string_allocator *m_allocator;
     cf00_string *m_str_array;
-    uint32 m_length;
+    uint32 m_size;
     uint32 m_capacity;
 } cf00_str_vec;
 
@@ -137,7 +137,9 @@ typedef struct cf00_procedure
     
 } cf00_procedure;
 
-
+void cf00_proc_init(cf00_procedure *p);
+void cf00_proc_clear(cf00_procedure *p);
+uint32 cf00_proc_verify_data(const cf00_procedure *p, cf00_str_vec *messages);
 
 typedef struct cf00_time
 {
@@ -163,17 +165,8 @@ typedef struct cf00_file_data
   
 } cf00_file_data;
 
-typedef struct cf00_file_sub_section_a
-{
-    cf00_managed_object_data m_object_data; /* must be first */
-    cf00_file_data *m_file_data;
-    uint64 m_section_begin_pos;
-    uint64 m_section_end_pos;   
-  
-} cf00_file_sub_section_a;
 
-
-typedef struct cf00_file_sub_section_b
+typedef struct cf00_file_sub_section
 {
     cf00_managed_object_data m_object_data; /* must be first */
     cf00_file_data *m_file_data;
@@ -186,7 +179,7 @@ typedef struct cf00_file_sub_section_b
     uint16 m_begin_line_offset;
     uint16 m_end_line_offset;
     uint32 m_adler_32_sum;
-} cf00_file_sub_section_b;
+} cf00_file_sub_section;
 
 
 typedef enum
