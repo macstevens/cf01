@@ -6,6 +6,7 @@ This file is C source code for parsing and manipulating a C-flat program
 #include <stdio.h>
 
 typedef void *void_ptr;
+typedef unsigned char boolean;
 typedef char int8;
 typedef unsigned char uint8;
 typedef short int16;
@@ -63,6 +64,12 @@ typedef struct cf00_str_vec
     uint32 m_capacity;
 } cf00_str_vec;
 
+void cf00_str_vec_init(cf00_str_vec *v);
+void cf00_str_vec_clear(cf00_str_vec *v);
+void cf00_str_vec_push_back(const cf00_string *s);
+void cf00_str_vec_push_back_format(const char *fmtstr, ...);
+
+
 typedef enum { CF00_ALLOC_BLOCK_SIZE_A = 0x1FE0 } cf00_alloc_block_sz;
 
 typedef struct cf00_alloc_block_a
@@ -114,6 +121,13 @@ typedef struct cf00_ptr_list
     uint32 m_size;
 } cf00_ptr_list;
 
+void cf00_ptr_list_init(cf00_ptr_list *p);
+void cf00_ptr_list_clear(cf00_ptr_list *p);
+void cf00_ptr_list_push_back(cf00_ptr_list *obj_data, void *p);
+uint64 cf00_ptr_list_verify_data(const cf00_ptr_list *pl, 
+    cf00_str_vec *messages);
+
+
 typedef struct cf00_managed_object_data
 {
     cf00_managed_object_type m_object_type;
@@ -127,7 +141,10 @@ typedef struct cf00_managed_object_data
     };
 } cf00_managed_object_data;
 
-
+void cf00_mng_obj_add_rev_ptr(cf00_managed_object_data *obj_data, void *p);
+void cf00_mng_obj_remove_rev_ptr(cf00_managed_object_data *obj_data, void *p);
+boolean cf00_mng_obj_has_rev_ptr(const cf00_managed_object_data *obj_data,
+    const void *p);
 
 typedef struct cf00_procedure
 {
@@ -139,7 +156,7 @@ typedef struct cf00_procedure
 
 void cf00_proc_init(cf00_procedure *p);
 void cf00_proc_clear(cf00_procedure *p);
-uint32 cf00_proc_verify_data(const cf00_procedure *p, cf00_str_vec *messages);
+uint64 cf00_proc_verify_data(const cf00_procedure *p, cf00_str_vec *messages);
 
 typedef struct cf00_time
 {
