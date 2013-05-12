@@ -94,6 +94,78 @@ static void cf00_free_char_buf(cf00_string_allocator *a, char *buf,
     }
 }
 
+static cf00_string *cf00_allocate_string_ptr_array(cf00_string_allocator *a, 
+    const uint32 capacity)
+{
+    cf00_string *string_ptr_array = NULL;
+    if (NULL == a) {
+        string_ptr_array = (cf00_string *)malloc(capacity);
+    }
+    else {
+        cf00_string **free_chain = NULL;
+        switch (capacity) {
+        case  4 : free_chain =  &(a->m_free_chain_string_ptr_array_4); break;
+        case  8 : free_chain =  &(a->m_free_chain_string_ptr_array_8); break;
+        case 16 : free_chain = &(a->m_free_chain_string_ptr_array_16); break;
+        case 32 : free_chain = &(a->m_free_chain_string_ptr_array_32); break;
+        default : free_chain = NULL; break;
+        }
+
+        if (NULL == free_chain) {            
+            string_ptr_array = (cf00_string *)malloc(capacity);
+        }
+        else {
+            if (NULL == *free_chain) {
+                /* grow free chain */
+                const uint32 capacity_bytes = capacity * sizeof(cf00_string);
+                assert(capacity_bytes <= CF00_ALLOC_BLOCK_SIZE_A);
+                cf00_sa_allocate_block(a);
+                struct cf00_alloc_block_a *b = a->m_alloc_block_chain;
+                cf00_string *m = (cf00_string *)(&((b->m_raw_memory)[0]));
+                cf00_string *m_end = (cf00_string *)(((char *)m) +
+                    (CF00_ALLOC_BLOCK_SIZE_A + 1 - capacity_bytes));
+                while (m < m_end) {
+                    *((cf00_string **)m) = *free_chain;
+                    *free_chain = m;
+                    m = (cf00_string *)(((char *)m) + capacity_bytes);
+                }
+            }
+            /* remove from free chain */
+            assert(NULL != *free_chain);
+            string_ptr_array = *free_chain;
+            *free_chain = *(cf00_string**)(*free_chain);
+        }
+    }
+    return string_ptr_array;
+}
+
+static void cf00_free_string_ptr_array(cf00_string_allocator *a,
+    cf00_string *string_ptr_array, const uint32 capacity)
+{
+    assert(NULL != string_ptr_array);
+    if (NULL == a) {
+        free(string_ptr_array);
+    }
+    else {
+        cf00_string **free_chain = NULL;
+        switch (capacity) {
+        case  4 : free_chain =  &(a->m_free_chain_string_ptr_array_4); break;
+        case  8 : free_chain =  &(a->m_free_chain_string_ptr_array_8); break;
+        case 16 : free_chain = &(a->m_free_chain_string_ptr_array_16); break;
+        case 32 : free_chain = &(a->m_free_chain_string_ptr_array_32); break;
+        default : free_chain = NULL; break;
+        }
+        if (NULL == free_chain) {            
+            free(string_ptr_array);
+        }
+        else {
+            /* add buf to free chain */
+            *((cf00_string **)string_ptr_array) = *free_chain;
+            *free_chain = string_ptr_array;          
+        }
+    }
+}
+
 
 
 
@@ -144,7 +216,7 @@ int cf00_str_compare(const cf00_string *x, const cf00_string *y)
             result = 1;
         }
         else {
-            const uint min_len = (x->m_length < y->m_length) ? 
+            const uint32 min_len = (x->m_length < y->m_length) ? 
                 x->m_length : y->m_length;
             result = strncmp(x->m_char_buf, y->m_char_buf, min_len);
             if (0 == result && x->m_length != y->m_length) {
@@ -213,7 +285,6 @@ void cf00_str_reserve(cf00_string *s, const uint32 new_cap)
         if (NULL != s->m_char_buf) {
             cf00_free_char_buf(s->m_allocator, s->m_char_buf, s->m_capacity);
         }
-
         s->m_char_buf = new_buf;
         s->m_capacity = new_capacity;
     }
@@ -272,6 +343,145 @@ void cf00_str_append_char_buf(cf00_string *s, const char *addition)
 
 
 
+/* cf00_str_vec */
+
+/* initialize raw memory */
+void cf00_str_vec_init(cf00_str_vec *sv)
+{
+    assert(NULL != sv);
+    memset(sv, 0, sizeof(cf00_str_vec));
+}
+
+/* 
+clear string vector
+also, prepare for freeing raw memory of struct cf00_string_allocator itself */
+void cf00_str_vec_clear(cf00_str_vec *sv)
+{
+    if (NULL != sv)
+    {
+        if (NULL != sv->m_str_array) {
+            cf00_free_string_ptr_array(sv->m_allocator, sv->m_str_array,
+                sv->m_capacity);
+        }      
+        sv->m_str_array = NULL;
+        sv->m_size = 0;
+        sv->m_capacity = 0;
+    }
+}
+
+int cf00_str_vec_compare(const cf00_str_vec *x, const cf00_str_vec *y)
+{
+    int result = 0;
+    if (NULL == x) {
+        if (NULL == y) {
+            result = 0;
+        }
+        else {
+            result = -1;
+        }
+    }
+    else {
+        if (NULL == y) {
+            result = 1;
+        }
+        else {             
+            const uint32 min_size = (x->m_size < y->m_size) ? 
+                x->m_size : y->m_size;
+            const cf00_string *xs = x->m_str_array;
+            const cf00_string *xs_end = xs + min_size;
+            const cf00_string *ys = y->m_str_array;
+            while (0 == result && xs < xs_end) {
+                result = cf00_str_compare(xs, ys);
+                ++xs;
+                ++ys;
+            }
+            if (0 == result && x->m_size != y->m_size) {
+                result = (x->m_size < y->m_size) ? -1 : 1;          
+            } 
+        }
+    }
+    return result;
+}
+
+void cf00_str_vec_resize(cf00_str_vec *sv, const uint32 new_sz)
+{
+    if (NULL != sv) {
+        cf00_str_vec_reserve(sv, new_sz+1);
+        sv->m_size = new_sz;
+    }
+}
+
+void cf00_str_vec_reserve(cf00_str_vec *sv, const uint32 new_cap)
+{
+    if (NULL != sv && sv->m_capacity <= new_cap)
+    {
+        // allocate new buffer
+        uint32 new_capacity;
+        if (new_cap <= 8) {
+            if (new_cap <= 4) {
+                new_capacity = 4;
+            }
+            else {
+                new_capacity = 8;
+            }
+        }
+        else {
+            if (new_cap <= 16) {
+                new_capacity = 16;
+            }
+            else if (new_cap <= 32) {
+                new_capacity = 32;
+            }
+            else{
+                new_capacity = new_cap;
+            }
+        }
+        assert(new_capacity >= new_cap);
+        cf00_string *new_str_array = cf00_allocate_string_ptr_array(
+            sv->m_allocator, new_capacity);
+
+        /* copy str_array contents */
+        if (NULL != sv->m_str_array && sv->m_size > 0) {
+            const cf00_string *src = sv->m_str_array;
+            const cf00_string *src_end = src + sv->m_size;
+            cf00_string *dest = new_str_array;
+            while (src < src_end) {
+                cf00_str_assign(dest, src);
+                ++src;
+                ++dest;
+            }
+        }
+
+        /* free old buffer and update string vector data */
+        if (NULL != sv->m_str_array) {
+            cf00_free_string_ptr_array(sv->m_allocator, sv->m_str_array,
+                sv->m_capacity);
+        }
+        sv->m_str_array = new_str_array;
+        sv->m_capacity = new_capacity;
+    }
+}
+
+/* copies string contents */
+void cf00_str_vec_push_back_copy(cf00_str_vec *sv, const cf00_string *s)
+{
+    assert(NULL != sv);
+    assert(NULL != s);
+    cf00_str_vec_reserve(sv, sv->m_size + 1);
+    cf00_str_assign(&((sv->m_str_array)[sv->m_size]), s);
+    ++(sv->m_size);
+}
+
+
+
+void cf00_str_vec_push_back_format(cf00_str_vec *sv, const char *fmtstr, ...)
+{
+    /* not implemented */
+}
+
+
+
+
 /* cf00_string_allocator */
 
 extern void cf00_init_string_allocator(cf00_string_allocator *a)
@@ -315,15 +525,15 @@ extern cf00_string *cf00_allocate_string(cf00_string_allocator *a)
             cf00_sa_allocate_block(a);
             struct cf00_alloc_block_a *b = a->m_alloc_block_chain;
             cf00_string *m = (cf00_string *)(&((b->m_raw_memory)[0]));
-            cf00_string *m_end = m + CF00_ALLOC_BLOCK_SIZE_A + 1 - 
-                sizeof(cf00_string);
+            cf00_string *m_end = (cf00_string *)(((char *)m) + 
+                (CF00_ALLOC_BLOCK_SIZE_A + 1 - sizeof(cf00_string)));
             while (m < m_end) {
                 cf00_string *temp_ptr;
                 cf00_str_init(m);
                 m->m_allocator = a;
                 m->m_char_buf = (char *)(a->m_free_chain_string);
                 a->m_free_chain_string = m;
-                m += sizeof(cf00_string);
+                m = (cf00_string *)(((char *)m) + sizeof(cf00_string));
             }
         }
 
@@ -341,7 +551,35 @@ extern cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a)
 {
     cf00_str_vec *sv = NULL;
 
-/* not implemented */
+    if (NULL == a) {
+        sv = (cf00_str_vec *)malloc(sizeof(cf00_str_vec));
+        cf00_str_vec_init(sv);
+    }
+    else {
+        if (NULL == a->m_free_chain_str_vec) {
+            /* grow free chain */
+            assert(sizeof(cf00_string) <= CF00_ALLOC_BLOCK_SIZE_A);
+            cf00_sa_allocate_block(a);
+            struct cf00_alloc_block_a *b = a->m_alloc_block_chain;
+            cf00_str_vec *m = (cf00_str_vec *)(&((b->m_raw_memory)[0]));
+            cf00_str_vec *m_end = (cf00_str_vec *)(((char *)m) + 
+                (CF00_ALLOC_BLOCK_SIZE_A + 1 - sizeof(cf00_str_vec)));
+            while (m < m_end) {
+                cf00_str_vec *temp_ptr;
+                cf00_str_vec_init(m);
+                m->m_allocator = a;
+                m->m_str_array = (cf00_string *)(a->m_free_chain_str_vec);
+                a->m_free_chain_str_vec = m;
+                m = (cf00_str_vec *)(((char *)m) + sizeof(cf00_str_vec));
+            }
+        }
+
+        /* remove from free chain */
+        assert(NULL != a->m_free_chain_str_vec);        
+        sv = a->m_free_chain_str_vec;
+        a->m_free_chain_str_vec = (cf00_str_vec *)(sv->m_str_array);
+        sv->m_str_array = NULL;
+    }
 
     return sv;
 }
@@ -364,7 +602,18 @@ extern void cf00_free_string(cf00_string *s)
 
 extern void cf00_free_str_vec(cf00_str_vec *sv)
 {
-
+    if (NULL != sv) {
+        cf00_str_vec_clear(sv);
+        cf00_string_allocator *a = sv->m_allocator;
+        if (NULL != a) {
+            /* put on free chain */
+            sv->m_str_array = (cf00_string *)(a->m_free_chain_str_vec);
+            a->m_free_chain_str_vec = sv;
+        }
+        else {
+            free(sv);
+        }
+    }
 }
 
 /* dump debug information to stdout */
@@ -372,15 +621,25 @@ void cf00_str_alloc_debug_dump(cf00_string_allocator *a)
 {
     typedef struct {char *m_c; int m_i;} char_ptr_int;
     const char_ptr_int char_buf_free_chn_sz[] = {
-        { a->m_free_chain_char_buf_16, 16 },
-        { a->m_free_chain_char_buf_32, 32 },
-        { a->m_free_chain_char_buf_64, 64 },
+        {  a->m_free_chain_char_buf_16,  16 },
+        {  a->m_free_chain_char_buf_32,  32 },
+        {  a->m_free_chain_char_buf_64,  64 },
         { a->m_free_chain_char_buf_128, 128 },
         { a->m_free_chain_char_buf_256, 256 },
         { a->m_free_chain_char_buf_512, 512 }
     };
     const size_t char_buf_free_chn_count =
         sizeof(char_buf_free_chn_sz)/sizeof(char_buf_free_chn_sz[0]);
+
+    typedef struct {cf00_string *m_s; int m_i;} str_ptr_int;
+    const str_ptr_int str_array_free_chn_sz[] = {
+        {  a->m_free_chain_string_ptr_array_4,  4 },
+        {  a->m_free_chain_string_ptr_array_8,  8 },
+        { a->m_free_chain_string_ptr_array_16, 16 },
+        { a->m_free_chain_string_ptr_array_32, 32 }
+    };
+    const size_t str_array_free_chn_count =
+        sizeof(str_array_free_chn_sz)/sizeof(str_array_free_chn_sz[0]);
 
     if (NULL == a) {
         printf("NULL STRING ALLOCATOR\n");
@@ -415,6 +674,26 @@ void cf00_str_alloc_debug_dump(cf00_string_allocator *a)
             ++count;
         }
         printf("  STRING FREE CHAIN SIZE:%i\n", count);
+
+        for (i = 0; i < str_array_free_chn_count; ++i) {
+            const str_ptr_int data = str_array_free_chn_sz[i];
+            cf00_string *free_chain = data.m_s;
+            int str_array_sz = data.m_i;
+            count = 0;
+            while (NULL != free_chain) {
+                free_chain = *((cf00_string**)free_chain);
+                ++count;
+            }
+            printf("  STR ARRAY[%i] FREE CHAIN SIZE:%i\n", str_array_sz, count);
+        }
+
+        count = 0;
+        cf00_str_vec *svfc = a->m_free_chain_str_vec;
+        while (NULL != svfc) {
+            svfc = (cf00_str_vec *)(svfc->m_str_array);
+            ++count;
+        }
+        printf("  STR_VEC FREE CHAIN SIZE:%i\n", count);
     }
 }
 

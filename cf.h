@@ -64,10 +64,13 @@ typedef struct cf00_str_vec
     uint32 m_capacity;
 } cf00_str_vec;
 
-void cf00_str_vec_init(cf00_str_vec *v);
-void cf00_str_vec_clear(cf00_str_vec *v);
-void cf00_str_vec_push_back(const cf00_string *s);
-void cf00_str_vec_push_back_format(const char *fmtstr, ...);
+void cf00_str_vec_init(cf00_str_vec *sv);
+void cf00_str_vec_clear(cf00_str_vec *sv);
+int cf00_str_vec_compare(const cf00_str_vec *x, const cf00_str_vec *y);
+void cf00_str_vec_resize(cf00_str_vec *sv, const uint32 new_sz);
+void cf00_str_vec_reserve(cf00_str_vec *sv, const uint32 new_cap);
+void cf00_str_vec_push_back_copy(cf00_str_vec *sv, const cf00_string *s);
+void cf00_str_vec_push_back_format(cf00_str_vec *sv, const char *fmtstr, ...);
 
 
 typedef enum { CF00_ALLOC_BLOCK_SIZE_A = 0x1FE0 } cf00_alloc_block_sz;

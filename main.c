@@ -57,8 +57,29 @@ int main(int argc, char *argv[])
     printf("compare(s1,s2)=%i\n", cf00_str_compare(s1,s2));
     printf("compare(s2,s1)=%i\n", cf00_str_compare(s2,s1));
     printf("compare(s2,s0)=%i\n", cf00_str_compare(s2,s0));
-    printf("compare(s0,s2)=%i\n", cf00_str_compare(s0,s1));
+    printf("compare(s0,s2)=%i\n", cf00_str_compare(s0,s2));
     cf00_str_alloc_debug_dump(&str_alloc);
+
+    cf00_str_vec *sv0 = cf00_allocate_str_vec(&str_alloc);
+    cf00_str_vec *sv1 = cf00_allocate_str_vec(&str_alloc);
+    printf("compare(sv0,sv1)=%i\n", cf00_str_vec_compare(sv0,sv1));
+    cf00_str_vec_push_back_copy(sv0, s0);
+    cf00_str_vec_push_back_copy(sv0, s1);
+    cf00_str_vec_push_back_copy(sv0, s2);
+    cf00_str_vec_push_back_copy(sv0, s0);
+    cf00_str_vec_push_back_copy(sv0, s1);
+    cf00_str_vec_push_back_copy(sv0, s2);
+    printf("compare(sv0,sv1)=%i\n", cf00_str_vec_compare(sv0,sv1));
+    cf00_str_vec_push_back_copy(sv1, s0);
+    cf00_str_vec_push_back_copy(sv1, s1);
+    cf00_str_vec_push_back_copy(sv1, s2);
+    cf00_str_vec_push_back_copy(sv1, s0);
+    cf00_str_vec_push_back_copy(sv1, s1);
+    cf00_str_vec_push_back_copy(sv1, s2);
+    printf("compare(sv0,sv1)=%i\n", cf00_str_vec_compare(sv0,sv1));
+
+
+
     cf00_free_string(s0);
     cf00_free_string(s1);
     cf00_free_string(s2);
