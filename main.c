@@ -77,7 +77,17 @@ int main(int argc, char *argv[])
     cf00_str_vec_push_back_copy(sv1, s1);
     cf00_str_vec_push_back_copy(sv1, s2);
     printf("compare(sv0,sv1)=%i\n", cf00_str_vec_compare(sv0,sv1));
-
+    cf00_str_alloc_debug_dump(&str_alloc);
+    cf00_str_vec_resize(sv0, 15);
+    cf00_str_alloc_debug_dump(&str_alloc);
+    cf00_str_vec_resize(sv0, 31);
+    cf00_str_alloc_debug_dump(&str_alloc);
+    cf00_str_vec_resize(sv0, 63);
+    cf00_str_alloc_debug_dump(&str_alloc);
+    cf00_str_vec_resize(sv0, 127);
+    cf00_str_alloc_debug_dump(&str_alloc);
+    cf00_str_vec_clear(sv0);
+    cf00_str_alloc_debug_dump(&str_alloc);
 
 
     cf00_free_string(s0);

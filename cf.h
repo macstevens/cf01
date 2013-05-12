@@ -59,7 +59,7 @@ void cf00_str_append_char_buf(cf00_string *s, const char *addition);
 typedef struct cf00_str_vec
 {
     struct cf00_string_allocator *m_allocator;
-    cf00_string *m_str_array;
+    cf00_string **m_str_array;
     uint32 m_size;
     uint32 m_capacity;
 } cf00_str_vec;
@@ -69,6 +69,7 @@ void cf00_str_vec_clear(cf00_str_vec *sv);
 int cf00_str_vec_compare(const cf00_str_vec *x, const cf00_str_vec *y);
 void cf00_str_vec_resize(cf00_str_vec *sv, const uint32 new_sz);
 void cf00_str_vec_reserve(cf00_str_vec *sv, const uint32 new_cap);
+void cf00_str_vec_push_back(cf00_str_vec *sv, cf00_string *s);
 void cf00_str_vec_push_back_copy(cf00_str_vec *sv, const cf00_string *s);
 void cf00_str_vec_push_back_format(cf00_str_vec *sv, const char *fmtstr, ...);
 
@@ -91,10 +92,10 @@ typedef struct cf00_string_allocator
     char *m_free_chain_char_buf_256;
     char *m_free_chain_char_buf_512;
     cf00_string *m_free_chain_string;
-    cf00_string *m_free_chain_string_ptr_array_4;
-    cf00_string *m_free_chain_string_ptr_array_8;
-    cf00_string *m_free_chain_string_ptr_array_16;
-    cf00_string *m_free_chain_string_ptr_array_32;
+    cf00_string **m_free_chain_string_ptr_array_4;
+    cf00_string **m_free_chain_string_ptr_array_8;
+    cf00_string **m_free_chain_string_ptr_array_16;
+    cf00_string **m_free_chain_string_ptr_array_32;
     cf00_str_vec *m_free_chain_str_vec;
 } cf00_string_allocator;
 
