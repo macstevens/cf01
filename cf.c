@@ -11,7 +11,9 @@
 
 /* STATIC FUNCTIONS */
 
-/* append formatted string */
+/* append formatted string   
+prerequisite:  msg[0] = 0, or msg is null-terminated string
+*/
 static void cf00_msg_append_f(char *msg, const size_t max_msg_len,
     const char *fmtstr, ...)
 {
@@ -373,10 +375,48 @@ uint64 cf00_str_verify_data(const cf00_string *s, char *err_msg,
 {
     uint64 error_count = 0;
 
-    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 1);
-    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 2);
-    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 3);
-    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 4);
+    if (NULL != s) {
+        if (NULL != s->m_allocator) {
+            /* verify s was allocated by m_allocator */
+        }
+
+        if (NULL == s->m_char_buf)
+        {
+            if (s->m_length > 0) {
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "m_char_buf NULL, but m_length = %i", (int)(s->m_length));
+            }
+            if (s->m_capacity > 0) {
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                   "m_char_buf NULL, but m_capacity = %i",(int)(s->m_capacity));
+            }
+        }
+        else
+        {
+            if (s->m_length < s->m_capacity && 
+                0x0 != (s->m_char_buf)[s->m_length]) {
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                   "string not null-terminated");
+            }
+        }
+
+        if (s->m_length > s->m_capacity) {
+            ++error_count;
+            cf00_msg_append_f(err_msg, max_err_msg_len, 
+               "m_length(%i) > m_capacity(%i)",(int)(s->m_length),
+               (int)(s->m_capacity));
+        }
+
+        if (0 == s->m_capacity && NULL != s->m_char_buf) {
+            ++error_count;
+            cf00_msg_append_f(err_msg, max_err_msg_len, 
+                "m_capacity = %i, but m_char_buf non-NULL",
+                (int)(s->m_capacity));
+        }
+    }
 
     return error_count;
 }
@@ -526,6 +566,12 @@ uint64 cf00_str_vec_verify_data(const cf00_str_vec *sv, char *err_msg,
     const size_t max_err_msg_len)
 {
     uint64 error_count = 0;
+
+    /* for each string, call cf00_str_verify_data(); */
+
+    /*     verify same m_allocator */
+
+    /*    compare capacity, size */
 
     return error_count;
 }
