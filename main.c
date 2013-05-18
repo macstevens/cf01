@@ -12,7 +12,7 @@ int main(int argc, char *argv[])
     }
 
     cf00_string_allocator str_alloc;
-    cf00_init_string_allocator(&str_alloc);
+    cf00_str_alloc_init(&str_alloc);
     cf00_str_alloc_debug_dump(&str_alloc);
     cf00_string *s0 = cf00_allocate_string(&str_alloc);
     cf00_str_alloc_debug_dump(&str_alloc);
@@ -94,8 +94,15 @@ int main(int argc, char *argv[])
     cf00_free_string(s1);
     cf00_free_string(s2);
     cf00_str_alloc_debug_dump(&str_alloc);
-    cf00_clear_string_allocator(&str_alloc);
-    cf00_str_alloc_debug_dump(&str_alloc);   
+    cf00_str_alloc_clear(&str_alloc);
+    cf00_str_alloc_debug_dump(&str_alloc);  
+
+{
+    char msg_buf[25];
+    *msg_buf = 0x0;
+    cf00_str_verify_data(NULL, msg_buf, sizeof(msg_buf));
+    printf("msg_buf = %s\n\n", msg_buf);
+}
 
     return EXIT_SUCCESS;
 }

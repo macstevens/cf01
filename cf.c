@@ -3,12 +3,38 @@
 */
 
 #include <assert.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "cf.h"
 
 /* STATIC FUNCTIONS */
+
+/* append formatted string */
+static void cf00_msg_append_f(char *msg, const size_t max_msg_len,
+    const char *fmtstr, ...)
+{
+    if (NULL != msg && NULL != fmtstr)
+    {
+        const size_t existing_msg_len = strlen(msg);
+        if (max_msg_len > existing_msg_len + 2)
+        {
+            size_t remaining_len = (max_msg_len - existing_msg_len) - 1;
+            va_list arg_ptr;
+            char *m = msg + existing_msg_len;
+            if (existing_msg_len > 0)
+            {
+                *m = '\n';
+                ++m;
+                --remaining_len;
+            }
+            va_start(arg_ptr, fmtstr);
+            vsnprintf(m, remaining_len, fmtstr, arg_ptr);
+            va_end(arg_ptr);
+        }
+    }
+}
 
 /* grow m_alloc_block_chain */
 static void cf00_sa_allocate_block(cf00_string_allocator *a)
@@ -342,6 +368,18 @@ void cf00_str_append_char_buf(cf00_string *s, const char *addition)
     }
 }
 
+uint64 cf00_str_verify_data(const cf00_string *s, char *err_msg,
+    const size_t max_err_msg_len)
+{
+    uint64 error_count = 0;
+
+    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 1);
+    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 2);
+    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 3);
+    cf00_msg_append_f(err_msg, max_err_msg_len, "err_msg%i", 4);
+
+    return error_count;
+}
 
 
 
@@ -479,25 +517,30 @@ void cf00_str_vec_push_back_copy(cf00_str_vec *sv, const cf00_string *s)
     cf00_str_vec_push_back(sv, s_copy);
 }
 
-
-
 void cf00_str_vec_push_back_format(cf00_str_vec *sv, const char *fmtstr, ...)
 {
     /* not implemented */
 }
 
+uint64 cf00_str_vec_verify_data(const cf00_str_vec *sv, char *err_msg,
+    const size_t max_err_msg_len)
+{
+    uint64 error_count = 0;
+
+    return error_count;
+}
 
 
 
 /* cf00_string_allocator */
 
-extern void cf00_init_string_allocator(cf00_string_allocator *a)
+extern void cf00_str_alloc_init(cf00_string_allocator *a)
 {
     memset(a, 0, sizeof(cf00_string_allocator));
 }
 
 /* prepare for freeing raw memory of struct cf00_string_allocator itself */
-extern void cf00_clear_string_allocator(cf00_string_allocator *a)
+extern void cf00_str_alloc_clear(cf00_string_allocator *a)
 {
     assert(NULL != a);
 
@@ -703,4 +746,15 @@ void cf00_str_alloc_debug_dump(cf00_string_allocator *a)
         printf("  STR_VEC FREE CHAIN SIZE:%i\n", count);
     }
 }
+
+
+uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
+    const size_t max_err_msg_len)
+{
+    uint64 error_count = 0;
+
+
+    return error_count;
+}
+
 

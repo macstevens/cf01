@@ -55,6 +55,9 @@ void cf00_str_assign(cf00_string *dest, const cf00_string *src);
 void cf00_str_assign_from_char_ptr(cf00_string *dest, const char *src);
 void cf00_str_append(cf00_string *s, const cf00_string *addition);
 void cf00_str_append_char_buf(cf00_string *s, const char *addition);
+uint64 cf00_str_verify_data(const cf00_string *s, char *err_msg,
+    const size_t max_err_msg_len);
+
 
 typedef struct cf00_str_vec
 {
@@ -72,7 +75,8 @@ void cf00_str_vec_reserve(cf00_str_vec *sv, const uint32 new_cap);
 void cf00_str_vec_push_back(cf00_str_vec *sv, cf00_string *s);
 void cf00_str_vec_push_back_copy(cf00_str_vec *sv, const cf00_string *s);
 void cf00_str_vec_push_back_format(cf00_str_vec *sv, const char *fmtstr, ...);
-
+uint64 cf00_str_vec_verify_data(const cf00_str_vec *sv, char *err_msg,
+    const size_t max_err_msg_len);
 
 typedef enum { CF00_ALLOC_BLOCK_SIZE_A = 0x1FE0 } cf00_alloc_block_sz;
 
@@ -99,14 +103,15 @@ typedef struct cf00_string_allocator
     cf00_str_vec *m_free_chain_str_vec;
 } cf00_string_allocator;
 
-void cf00_init_string_allocator(cf00_string_allocator *a);
-void cf00_clear_string_allocator(cf00_string_allocator *a);
+void cf00_str_alloc_init(cf00_string_allocator *a);
+void cf00_str_alloc_clear(cf00_string_allocator *a);
 cf00_string *cf00_allocate_string(cf00_string_allocator *a);
 cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a);
 void cf00_free_string(cf00_string *s);
 void cf00_free_str_vec(cf00_str_vec *sv);
 void cf00_str_alloc_debug_dump(cf00_string_allocator *a);
-
+uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
+    const size_t max_err_msg_len);
 
 typedef void *cf00_void_ptr_array3[3];
 
