@@ -406,7 +406,7 @@ uint64 cf00_str_verify_data(const cf00_string *s, char *err_msg,
         if (s->m_length > s->m_capacity) {
             ++error_count;
             cf00_msg_append_f(err_msg, max_err_msg_len, 
-               "m_length(%i) > m_capacity(%i)",(int)(s->m_length),
+               "string m_length(%i) > m_capacity(%i)",(int)(s->m_length),
                (int)(s->m_capacity));
         }
 
@@ -567,11 +567,50 @@ uint64 cf00_str_vec_verify_data(const cf00_str_vec *sv, char *err_msg,
 {
     uint64 error_count = 0;
 
-    /* for each string, call cf00_str_verify_data(); */
+    if (NULL != sv)
+    {
+        size_t i;
 
-    /*     verify same m_allocator */
+        /* for each string, call cf00_str_verify_data(); */
+        for (i = 0; i < sv->m_capacity; ++i) {
+            cf00_string *s = (sv->m_str_array)[i];
 
-    /*    compare capacity, size */
+            if (i < sv->m_size) {
+                if (NULL != s) {
+                    error_count += cf00_str_verify_data(s, err_msg,
+                        max_err_msg_len);            
+                    if (s->m_allocator != sv->m_allocator) {
+                        cf00_msg_append_f(err_msg, max_err_msg_len, 
+                            "m_allocator mismatch");
+                        ++error_count;
+                    }
+                }
+            }
+            else {
+                if (NULL != s) {
+                    cf00_msg_append_f(err_msg, max_err_msg_len, 
+                        "non-NULL string past array end i=%i", (int)i);
+                }
+            }
+        }
+
+        /*    compare capacity, size */
+
+        if (sv->m_size > sv->m_capacity) {
+            ++error_count;
+            cf00_msg_append_f(err_msg, max_err_msg_len, 
+               "str_vec m_size(%i) > m_capacity(%i)",(int)(sv->m_size),
+               (int)(sv->m_capacity));
+        }
+
+        if (0 == sv->m_capacity && NULL != sv->m_str_array) {
+            ++error_count;
+            cf00_msg_append_f(err_msg, max_err_msg_len, 
+                "m_capacity = %i, but m_str_array non-NULL",
+                (int)(sv->m_str_array));
+        }
+
+    }
 
     return error_count;
 }
