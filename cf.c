@@ -843,3 +843,46 @@ uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
 }
 
 
+
+
+
+
+/*
+UNIT TESTS
+
+#define CF00_TEST_ASSERT(_d, _x) cf00_test_assert(, _x_d, ##_x, __FILE__, __LINE__)
+
+
+struct cf00_unit_test_data
+{
+    // pseudo-random number generator    https://sites.google.com/site/murmurhash/
+
+    // temp variables type *, name
+
+    // uint32 error_count
+    // uint32 assertion count
+    // time used for each function
+};
+
+void cf00_test_assert(cf00_unit_test_data *d, int boolean_expression, char *assertion_expression, char *file_name, int line_number)
+{
+
+
+}
+
+void cf00_run_unit_test(func *, randomseed, cf00_unit_test_data, iteration count)
+
+
+array
+  unit test func,  "name",  iteration count
+  unit test func,  "name",  iteration count
+  unit test func,  "name",  iteration count
+
+
+
+
+
+
+*/
+
+
