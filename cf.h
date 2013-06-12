@@ -3,6 +3,9 @@
 This file is C source code for parsing and manipulating a C-flat program
 */
 
+#ifndef CF_H
+#define CF_H
+
 #include <stdio.h>
 
 typedef void *void_ptr;
@@ -15,6 +18,7 @@ typedef long int32;
 typedef unsigned long uint32;
 typedef long long int64;
 typedef unsigned long long uint64;
+typedef double float64;
 
 
 
@@ -254,7 +258,7 @@ typedef struct cf00_ternary_relation
 } cf00_ternary_relation;
 
 
-
+#endif
 
 
 
