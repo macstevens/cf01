@@ -114,7 +114,7 @@ cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a);
 void cf00_free_string(cf00_string *s);
 void cf00_free_str_vec(cf00_str_vec *sv);
 void cf00_str_alloc_debug_dump(cf00_string_allocator *a);
-uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
+uint64 cf00_str_alloc_verify_data(const cf00_string_allocator *a, char *err_msg,
     const size_t max_err_msg_len);
 
 typedef void *cf00_void_ptr_array3[3];

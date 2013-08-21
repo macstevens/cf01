@@ -833,11 +833,65 @@ void cf00_str_alloc_debug_dump(cf00_string_allocator *a)
 }
 
 
-uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
-    const size_t max_err_msg_len)
+uint64 cf00_str_alloc_verify_data(const cf00_string_allocator *a,
+    char *err_msg, const size_t max_err_msg_len)
 {
     uint64 error_count = 0;
 
+    if (NULL != a)
+    {
+        static const size_t max_block_count = 0x1000000;
+        size_t i;
+        size_t count = 0;
+        cf00_alloc_block_a *b = a->m_alloc_block_chain;
+        while (NULL != b && count <= max_block_count) {
+            /* verify block */
+            b = b->m_next_alloc_block;
+            ++count;
+        }
+
+#if 0
+        for (i = 0; i < char_buf_free_chn_count; ++i) {
+            const char_ptr_int data = char_buf_free_chn_sz[i];
+            char *free_chain = data.m_c;
+            int char_buf_sz = data.m_i;
+            count = 0;
+            while (NULL != free_chain) {
+                free_chain = *((char**)free_chain);
+                ++count;
+            }
+            printf("  CHAR BUF[%i] FREE CHAIN SIZE:%i\n", char_buf_sz, count);
+        }
+
+        count = 0;
+        cf00_string *sfc = a->m_free_chain_string;
+        while (NULL != sfc) {
+            sfc = (cf00_string *)(sfc->m_char_buf);
+            ++count;
+        }
+        printf("  STRING FREE CHAIN SIZE:%i\n", count);
+
+        for (i = 0; i < str_array_free_chn_count; ++i) {
+            const str_ptr_int data = str_array_free_chn_sz[i];
+            cf00_string **free_chain = data.m_s;
+            int str_array_sz = data.m_i;
+            count = 0;
+            while (NULL != free_chain) {
+                free_chain = *((cf00_string***)free_chain);
+                ++count;
+            }
+            printf("  STR ARRAY[%i] FREE CHAIN SIZE:%i\n", str_array_sz, count);
+        }
+
+        count = 0;
+        cf00_str_vec *svfc = a->m_free_chain_str_vec;
+        while (NULL != svfc) {
+            svfc = (cf00_str_vec *)(svfc->m_str_array);
+            ++count;
+        }
+#endif
+
+    }
 
     return error_count;
 }
