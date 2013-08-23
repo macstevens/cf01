@@ -13,6 +13,22 @@ This file is C source code for unit tests testing core cf code.
 
 
 /*
+main(argc, argv)
+  cf00_unit_test_main(argc, argv, test_suite)
+    cf00_run_test_suite(iteration_count, rand_seed, test_suite)
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 suite??
  +-unit test
