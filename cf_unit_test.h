@@ -46,9 +46,9 @@ array of unit test functions
 
 typedef void (*cf00_unit_test_func_ptr)(cf00_unit_test_data *d);
 
-typedef unit_test_func_ptr *unit_test_func_ptr_array;ty0
+typedef unit_test_func_ptr *unit_test_func_ptr_array;
 
-typedef struct cf00_unit_test_suite_element
+typedef struct cf00_unit_test
 {
     cf00_unit_test_func_ptr m_func;
     const char *m_func_name; 
@@ -58,7 +58,7 @@ typedef struct cf00_unit_test_suite_element
 typedef struct cf00_unit_test_suite
 {
     const char *m_suite_name;
-    cf00_unit_test_suite_element *m_elements;
+    cf00_unit_test_suite *m_tests;
     size_t m_element_count;
 
 }
@@ -110,6 +110,12 @@ void cf00_test_rand_str_buf_abc123(cf00_unit_test_data, char *str_buf,
 
 void cf00_test_rand_str_buf_subset(cf00_unit_test_data, const char *superset,
     const size_t superset_len, char *str_buf, const size_t len);
+
+
+
+
+
+
 
 
 
