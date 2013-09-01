@@ -12,11 +12,11 @@ This file is C source code for unit tests testing core cf code.
 #include "cf_unit_test.h"
 
 
-int cf00_run_basic_test_suite(int argc, char *argv[]);
+int cf00_run_basic_test_suite_main(int argc, char *argv[]);
 
 void cf00_run_string_test(cf00_unit_test_data *d);
 
-void cf00_run_strvec_test(cf00_unit_test_data *d);
+void cf00_run_str_vec_test(cf00_unit_test_data *d);
 
 
 
