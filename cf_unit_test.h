@@ -58,9 +58,8 @@ typedef struct cf00_unit_test
 typedef struct cf00_unit_test_suite
 {
     const char *m_suite_name;
-    cf00_unit_test_suite *m_tests;
+    cf00_unit_test *m_tests;
     size_t m_element_count;
-
 }
 
 
@@ -102,13 +101,13 @@ boolean cf00_test_rand_boolean(cf00_unit_test_data *d);
 
 float64 cf00_test_rand_float64(cf00_unit_test_data *d);
 
-void cf00_test_rand_str_buf(cf00_unit_test_data, char *str_buf,
+void cf00_test_rand_str_buf(cf00_unit_test_data *d, char *str_buf,
     const size_t len);
 
-void cf00_test_rand_str_buf_abc123(cf00_unit_test_data, char *str_buf,
+void cf00_test_rand_str_buf_abc123(cf00_unit_test_data *d, char *str_buf,
     const size_t len);
 
-void cf00_test_rand_str_buf_subset(cf00_unit_test_data, const char *superset,
+void cf00_test_rand_str_buf_subset(cf00_unit_test_data *d, const char *superset,
     const size_t superset_len, char *str_buf, const size_t len);
 
 
