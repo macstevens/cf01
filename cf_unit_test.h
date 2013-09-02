@@ -7,8 +7,12 @@ This file is C source code for unit tests testing core cf code.
 #define CF_UNIT_TEST_H
 
 #include <stdio.h>
+#include <time.h>
 
 #include "cf.h"
+
+struct cf00_unit_test;
+struct cf00_unit_test_suite;
 
 
 typedef struct cf00_unit_test_rand_data
@@ -22,11 +26,23 @@ void init_unit_test_rand_data(cf00_unit_test_rand_data *rd,
 uint32 advance_unit_test_rand_data(cf00_unit_test_rand_data *rd);
 
 
+typedef struct cf00_indiv_unit_test_data
+{
+    size_t m_unit_test_idx;   /* index into test_suite->m_tests */
+    uint32 m_assertion_count; /* total for unit test */
+    uint32 m_error_count;     /* total for unit test */
+    time_t m_elapsed_time;    /* total for unit test */ 
+} cf00_indiv_unit_test_data;
+
+
 typedef struct cf00_unit_test_data
 {
-    // test suite random seed
-    // current iteration start random seed
-    // pseudo-random number generator    https://sites.google.com/site/murmurhash/
+   // const cf00_unit_test_suite *m_unit_test_suite;
+    cf00_indiv_unit_test_data *m_indiv_test_data; /* array */
+
+    uint32 m_random_seed;           /* test suite random seed */
+    uint32 m_current_random_seed;   /* current iteration start random seed */
+    cf00_unit_test_rand_data m_rng; /* pseudo-random number generator */ 
 
     // temp variables type *, name
 
