@@ -20,6 +20,39 @@
 /* EXTERN FUNCTIONS */
 
 
+void_init_unit_test_rand_data(cf00_unit_test_rand_data *rd,
+    const uint32 rand_seed)
+{
+    if (NULL != rd)
+    {
+        rd->m_w = rand_seed;
+        rd->m_z = 0xFFFFFFFF ^ rand_seed;
+    }
+}
+
+uint32 advance_unit_test_rand_data(cf00_unit_test_rand_data *rd)
+{
+    uint32 result = 0;
+    if (NULL != rd)
+    {
+        /* bassed on multiply-with-carry formula, by George Marsaglia,
+        http://en.wikipedia.org/wiki/Random_number_generation 
+        https://groups.google.com/forum/#!topic/sci.crypt/yoaCpGWKEk0 */
+        if (0 == rd->m_w || 0x464FFFFF == rd->m_w)
+            {
+            ++(rd->m_w);
+            }
+        if (0 == rd->m_z || 0x9068FFFF == rd->m_z)
+            {
+            ++(rd->m_z);
+            }
+        rd->m_z = 36969 * ((rd->m_z) & 65535) + ((rd->m_z) >> 16);
+        rd->m_w = 18000 * ((rd->m_w) & 65535) + ((rd->m_w) >> 16);
+        result = ((rd->m_z) << 16) + rd->m_w;
+    }
+    return result;
+}
+
 
 
 

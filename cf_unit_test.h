@@ -11,23 +11,15 @@ This file is C source code for unit tests testing core cf code.
 #include "cf.h"
 
 
+typedef struct cf00_unit_test_rand_data
+{
+    uint32 m_w;
+    uint32 m_z;
+} cf00_unit_test_rand_data;
 
-/*
-main(argc, argv)
-  cf00_unit_test_main(argc, argv, test_suite)
-    cf00_run_test_suite(iteration_count, rand_seed, test_suite)
-
-
-suite??
- +-unit test
-   +-unit test top level function <-- each is called with same random seed
-     +subroutine
-
-
-run_unit_test_suite(cf00_unit_test_data *d, unit_test_func_ptr_array func_array,
-    const size_t func_count);
-
-*/
+void init_unit_test_rand_data(cf00_unit_test_rand_data *rd,
+    const uint32 rand_seed);
+uint32 advance_unit_test_rand_data(cf00_unit_test_rand_data *rd);
 
 
 typedef struct cf00_unit_test_data
