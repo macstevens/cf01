@@ -54,10 +54,42 @@ uint32 advance_unit_test_rand_data(cf00_unit_test_rand_data *rd)
 }
 
 
+#if 0
+    const struct cf00_unit_test_suite *m_unit_test_suite;
+    cf00_indiv_unit_test_data *m_indiv_test_data; /* array */
 
+    uint32 m_random_seed;           /* test suite random seed */
+    uint32 m_current_random_seed;   /* current iteration start random seed */
+    cf00_unit_test_rand_data m_rng; /* pseudo-random number generator */ 
 
+    // temp variables type *, name
 
-void cf00_init_unit_test_data(cf00_unit_test_data *d, const uint32 rand_seed)
+    uint32 m_total_assertion_count;
+    uint32 m_total_error_count;
+
+    uint32 m_current_unit_test_idx;
+    uint32 m_current_iteration_idx;
+    uint32 m_total_iteration_count;    
+
+    // callback function for logging
+} cf00_unit_test_data;
+
+void cf00_init_unit_test_data(cf00_unit_test_data *d,
+    const cf00_unit_test_suite *test_suite, const uint32 rand_seed);
+void cf00_free_unit_test_data(cf00_unit_test_data *d);
+#endif
+
+void cf00_init_unit_test_data(cf00_unit_test_data *d,
+    const cf00_unit_test_suite *test_suite, const uint32 rand_seed)
+{
+    if (NULL != d)
+    {
+    memset(d, 0, sizeof(*d));
+
+    }
+}
+
+void cf00_free_unit_test_data(cf00_unit_test_data *d)
 {
 
 }
@@ -162,7 +194,7 @@ int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
     printf("TEST_SUITE_RANDOM_SEED=%i\n", (int)random_seed);
     printf("ITERATION_COUNT=%i\n", (int)iteration_count);
 
-    cf00_init_unit_test_data(&d, random_seed);
+    cf00_init_unit_test_data(&d, unit_test_suite, random_seed);
 
     for (test_idx = 0; test_idx < unit_test_suite->m_test_count; ++test_idx)
     {
@@ -196,6 +228,7 @@ int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
 
    
     // deconstruct unit test data
+    cf00_free_unit_test_data(&d);
 
     return EXIT_SUCCESS; /* return total error count */   
 

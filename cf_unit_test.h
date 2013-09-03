@@ -37,7 +37,7 @@ typedef struct cf00_indiv_unit_test_data
 
 typedef struct cf00_unit_test_data
 {
-   // const cf00_unit_test_suite *m_unit_test_suite;
+    const struct cf00_unit_test_suite *m_unit_test_suite;
     cf00_indiv_unit_test_data *m_indiv_test_data; /* array */
 
     uint32 m_random_seed;           /* test suite random seed */
@@ -46,21 +46,20 @@ typedef struct cf00_unit_test_data
 
     // temp variables type *, name
 
-    uint32 m_total_assertion_count; // uint32 assertion count
-    uint32 m_total_error_count;  // uint32 error_count
+    uint32 m_total_assertion_count;
+    uint32 m_total_error_count;
 
-    // time used for each unit test
-    // assertion count for each unit test
-    // error count for each unit test
-
-    // current unit test
-    uint32 m_current_iteration_idx; // current iteration number
-    uint32 m_total_iteration_count; // total iteration count    
+    uint32 m_current_unit_test_idx;
+    uint32 m_current_iteration_idx;
+    uint32 m_total_iteration_count;    
 
     // callback function for logging
 } cf00_unit_test_data;
 
-void cf00_init_unit_test_data(cf00_unit_test_data *d, const uint32 rand_seed);
+void cf00_init_unit_test_data(cf00_unit_test_data *d,
+    const struct cf00_unit_test_suite *test_suite, const uint32 rand_seed);
+void cf00_free_unit_test_data(cf00_unit_test_data *d);
+
 // deconstruct test data
 uint32 *cf00_test_allocate_temp_uint32(const char *var_name);
 void cf00_test_assert(cf00_unit_test_data *d, const boolean condition,
