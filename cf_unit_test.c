@@ -131,14 +131,26 @@ void cf00_test_assert(cf00_unit_test_data *d, const boolean condition,
     const char *condition_str, const char *file_name, const int line_number)
 {
     /* increment d assertion count */
+    if (NULL != d)
+    {
+        ++(d->m_total_assertion_count);
+        ++((d->m_indiv_test_data)[
+            d->m_current_unit_test_idx].m_assertion_count);
+    }
 
     if (!condition)
     {
-    /* increment d assertion failure count */
+        /* increment d assertion failure count */
+        if (NULL != d)
+        {
+            ++(d->m_total_error_count);
+            ++((d->m_indiv_test_data)[
+                d->m_current_unit_test_idx].m_error_count);
+        }
 
-    /* log error */
-    printf("ASSERTION FAILED  %s [%i]: %s\n", file_name, line_number,
-        condition_str);
+        /* log error */
+        printf("ASSERTION FAILED  %s [%i]: %s\n", file_name, line_number,
+            condition_str);
     }
 }
 
@@ -256,7 +268,15 @@ int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
 
         /* record time for current unit test */
         indiv_unit_test_data->m_elapsed_time = stop_time - start_time;
-        d.m_total_elapsed_time += indiv_unit_test_data->m_elapsed_time;       
+        d.m_total_elapsed_time += indiv_unit_test_data->m_elapsed_time; 
+    
+        /* report unit test results */
+        printf("TEST:%s  ASSERTIONS:%i  ERRORS:%i  TIME:%i\n",
+            current_unit_test->m_func_name, 
+            (int)(indiv_unit_test_data->m_assertion_count),
+            (int)(indiv_unit_test_data->m_error_count),
+            (int)(indiv_unit_test_data->m_elapsed_time));
+              
     }
 
 
