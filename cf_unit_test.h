@@ -48,6 +48,7 @@ typedef struct cf00_unit_test_data
 
     uint32 m_total_assertion_count;
     uint32 m_total_error_count;
+    time_t m_total_elapsed_time;
 
     uint32 m_current_unit_test_idx;
     uint32 m_current_iteration_idx;
@@ -57,7 +58,8 @@ typedef struct cf00_unit_test_data
 } cf00_unit_test_data;
 
 void cf00_init_unit_test_data(cf00_unit_test_data *d,
-    const struct cf00_unit_test_suite *test_suite, const uint32 rand_seed);
+    const struct cf00_unit_test_suite *test_suite, const uint32 rand_seed,
+    const uint32 iteration_count);
 void cf00_free_unit_test_data(cf00_unit_test_data *d);
 
 // deconstruct test data

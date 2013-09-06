@@ -20,7 +20,7 @@
 /* EXTERN FUNCTIONS */
 
 
-void_init_unit_test_rand_data(cf00_unit_test_rand_data *rd,
+void init_unit_test_rand_data(cf00_unit_test_rand_data *rd,
     const uint32 rand_seed)
 {
     if (NULL != rd)
@@ -80,18 +80,45 @@ void cf00_free_unit_test_data(cf00_unit_test_data *d);
 #endif
 
 void cf00_init_unit_test_data(cf00_unit_test_data *d,
-    const cf00_unit_test_suite *test_suite, const uint32 rand_seed)
+    const cf00_unit_test_suite *test_suite, const uint32 rand_seed,
+    const uint32 iteration_count)
 {
+    size_t i;
+    cf00_indiv_unit_test_data *indiv_unit_test_data;
     if (NULL != d)
     {
-    memset(d, 0, sizeof(*d));
+        memset(d, 0, sizeof(*d));
+        d->m_unit_test_suite = test_suite;
+        d->m_indiv_test_data = (cf00_indiv_unit_test_data *)malloc(
+            (test_suite->m_test_count) * sizeof(cf00_indiv_unit_test_data));
+        indiv_unit_test_data = d->m_indiv_test_data;
+        for (i = 0; i < test_suite->m_test_count; ++i, ++indiv_unit_test_data)
+        {
+            indiv_unit_test_data->m_unit_test_idx = i;
+            indiv_unit_test_data->m_assertion_count = 0;
+            indiv_unit_test_data->m_error_count = 0;
+            indiv_unit_test_data->m_elapsed_time = 0;
+        }
+        d->m_random_seed = rand_seed;
+        d->m_current_random_seed = rand_seed;
+        init_unit_test_rand_data(&(d->m_rng), rand_seed);
 
+        d->m_total_assertion_count = 0;
+        d->m_total_error_count = 0;
+        d->m_total_elapsed_time = 0;
+
+        d->m_current_unit_test_idx;
+        d->m_current_iteration_idx;
+        d->m_total_iteration_count = iteration_count;    
     }
 }
 
 void cf00_free_unit_test_data(cf00_unit_test_data *d)
 {
-
+    if (NULL != d)
+    {
+        free(d->m_indiv_test_data);
+    }
 }
 
 uint32 *cf00_test_allocate_temp_uint32(const char *var_name)
@@ -180,11 +207,13 @@ int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
     need the ability to quickly repeat any unit test given a random seed
     */
 
-
-    uint32 i;
-    uint32 test_idx = 0;
+    time_t start_time;
+    time_t stop_time;
+    time_t elapsed_time;
     cf00_unit_test_data d;
     const cf00_unit_test *current_unit_test = NULL;
+    cf00_indiv_unit_test_data *indiv_unit_test_data = NULL;
+
 
     printf("RUN TEST SUITE START\n");
     if (NULL != unit_test_suite->m_suite_name)
@@ -194,17 +223,24 @@ int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
     printf("TEST_SUITE_RANDOM_SEED=%i\n", (int)random_seed);
     printf("ITERATION_COUNT=%i\n", (int)iteration_count);
 
-    cf00_init_unit_test_data(&d, unit_test_suite, random_seed);
+    cf00_init_unit_test_data(&d, unit_test_suite, random_seed, iteration_count);
+    indiv_unit_test_data = d.m_indiv_test_data;
 
-    for (test_idx = 0; test_idx < unit_test_suite->m_test_count; ++test_idx)
+    for (d.m_current_unit_test_idx = 0; 
+        d.m_current_unit_test_idx < unit_test_suite->m_test_count;
+        ++d.m_current_unit_test_idx, ++indiv_unit_test_data)
     {
-        current_unit_test = &((unit_test_suite->m_tests)[test_idx]);
+        current_unit_test = 
+            &((unit_test_suite->m_tests)[d.m_current_unit_test_idx]);
 
         /* record start time */
+        start_time = time(NULL);
         
-        for (i = 0; i < iteration_count; ++i)
+        for (d.m_current_iteration_idx = 0; 
+            d.m_current_iteration_idx < iteration_count;
+            ++d.m_current_iteration_idx)
         {
-            /* clear temp variables   */
+            /* clear temp variables */
         
             /* cf00_reset_unit_test_rand_gen(), but do not reset
             global random seed or any other parameters      */
@@ -216,9 +252,11 @@ int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
         }
 
         /* record stop time */
-   
-        /* record time for current unit test */
+        stop_time = time(NULL);
 
+        /* record time for current unit test */
+        indiv_unit_test_data->m_elapsed_time = stop_time - start_time;
+        d.m_total_elapsed_time += indiv_unit_test_data->m_elapsed_time;       
     }
 
 
