@@ -167,11 +167,13 @@ static cf00_string **cf00_allocate_string_ptr_array(cf00_string_allocator *a,
     return string_ptr_array;
 }
 
+/**
+precondition: all strings in array have been freed or ownership
+has been passed to a new array, etc.
+*/
 static void cf00_free_string_ptr_array(cf00_string_allocator *a,
     cf00_string **str_ptr_array, const uint32 capacity)
 {
-// need to deal with strings allocated
-
     assert(NULL != str_ptr_array);
     if (NULL == a) {
         free(str_ptr_array);
@@ -440,9 +442,18 @@ void cf00_str_vec_clear(cf00_str_vec *sv)
     if (NULL != sv)
     {
         if (NULL != sv->m_str_array) {
+            /* free individual strings */
+            cf00_string **s = sv->m_str_array;
+            cf00_string ** const s_end = s + (sv->m_size);
+            for (; s_end != s; ++s)
+            {
+                cf00_free_string(*s);
+            }
+
+            /* free array */
             cf00_free_string_ptr_array(sv->m_allocator, sv->m_str_array,
                 sv->m_capacity);
-        }      
+        }
         sv->m_str_array = NULL;
         sv->m_size = 0;
         sv->m_capacity = 0;
@@ -486,6 +497,17 @@ int cf00_str_vec_compare(const cf00_str_vec *x, const cf00_str_vec *y)
 void cf00_str_vec_resize(cf00_str_vec *sv, const uint32 new_sz)
 {
     if (NULL != sv) {
+        if (new_sz < sv->m_size)
+        {
+            /* free extra strings */
+            cf00_string **s = sv->m_str_array + new_sz;
+            cf00_string ** const s_end = sv->m_str_array + sv->m_size;
+            for (; s_end != s; ++s)
+            {
+                cf00_free_string(*s);
+                *s = NULL;
+            }
+        }
         cf00_str_vec_reserve(sv, new_sz+1);
         sv->m_size = new_sz;
     }

@@ -195,6 +195,18 @@ void cf00_run_str_vec_test(cf00_unit_test_data *d)
     CF00_TEST_ASSERT(d, 0 == cf00_str_vec_verify_data(sv0, NULL, 0));
     CF00_TEST_ASSERT(d, 0 == cf00_str_alloc_verify_data(&str_alloc, NULL, 0));
 
+    cf00_str_vec_resize(sv0, 3);
+    CF00_TEST_ASSERT(d, 3 == sv0->m_size);
+    CF00_TEST_ASSERT(d, 0 != cf00_str_vec_compare(sv0, sv1));
+    CF00_TEST_ASSERT(d, 0 == cf00_str_vec_verify_data(sv0, NULL, 0));
+    CF00_TEST_ASSERT(d, 0 == cf00_str_alloc_verify_data(&str_alloc, NULL, 0));
+
+    cf00_str_vec_resize(sv1, 3);
+    CF00_TEST_ASSERT(d, 3 == sv1->m_size);
+    CF00_TEST_ASSERT(d, 0 == cf00_str_vec_compare(sv0, sv1));
+    CF00_TEST_ASSERT(d, 0 == cf00_str_vec_verify_data(sv0, NULL, 0));
+    CF00_TEST_ASSERT(d, 0 == cf00_str_alloc_verify_data(&str_alloc, NULL, 0));
+
     cf00_str_vec_clear(sv0);
     CF00_TEST_ASSERT(d, 0 == sv0->m_size);
     CF00_TEST_ASSERT(d, 0 != cf00_str_vec_compare(sv0, sv1));
