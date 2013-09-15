@@ -168,8 +168,28 @@ typedef struct cf00_procedure
       data type    name
       data type    name
       data type    name
+      pointer type
+        owning pointer
+        non-owning pointer
+        shared ownership pointer
+          automatic garbage collected pointer
+      textual representation
+      image representation
+      debug output procedure[s]
+      text comment[s]
 
-    
+
+
+    main procedure = essential to achieve post conditions
+    sub-optional procedures    = sub-procedures or instructions interlaced with the main instruction sequence -- purpose is to support assertions or debug output
+
+
+    preconditions
+    postconditions
+    intermediate assertions
+    textual representation[s]
+    image representation[s]
+    compiled representation[s]
     
     instruction sequence
       sequence point
@@ -195,8 +215,27 @@ typedef struct cf00_procedure
       prev sequence point[s]
       next sequence point[s]
       parent procedure[s]
+        main parent procedure
+        optional parent procedure
       implementation procedure
       map from parent procedure data to implementation procedure data
+      instruction type: assertion, nop, ordinary instruction, branch instruction
+      if assertion
+        required optional procedure
+      link to text representation
+      link to alternate equivalent instruction
+      link to other representation
+
+
+
+
+required procedure = main procedure
+optional procedure = 
+  required to perform assertion
+assertion
+  warning
+    % confidence
+  error
 
 
 
