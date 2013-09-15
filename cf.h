@@ -159,9 +159,33 @@ void cf00_mng_obj_remove_rev_ptr(cf00_managed_object_data *obj_data, void *p);
 boolean cf00_mng_obj_has_rev_ptr(const cf00_managed_object_data *obj_data,
     const void *p);
 
+
+struct cf00_data_type;
+
+struct cf00_data_struct;
+
+typedef struct cf00_data_struct_element
+{
+    struct cf00_data_type *m_data_type;
+    cf00_string *m_name;
+} cf00_data_struct_element;
+
+typedef struct cf00_data_struct
+{
+    cf00_managed_object_data m_object_data; /* must be first */
+    cf00_data_struct_element *m_data_type_array;
+    uint32 m_data_type_array_length;
+    uint32 m_data_type_array_capacity;
+} cf00_data_struct;
+
+
+
+
 typedef struct cf00_procedure
 {
     cf00_managed_object_data m_object_data; /* must be first */
+
+    struct cf00_data_struct *m_data_struct;
 
     /*
     data
