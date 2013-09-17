@@ -646,14 +646,13 @@ extern void cf00_str_alloc_init(cf00_string_allocator *a)
     memset(a, 0, sizeof(cf00_string_allocator));
 }
 
-/* prepare for freeing raw memory of struct cf00_string_allocator itself */
+/* prepare for freeing raw memory of struct cf00_string_allocator itself
+
+precondition: all strings and str_vecs cleared
+*/
 extern void cf00_str_alloc_clear(cf00_string_allocator *a)
 {
     assert(NULL != a);
-
-    /* normally, would need to clear all individual strings, but strings
-    have no internal allocated memory other than that which is in the blocks */
-
 
     /* free all blocks */
     cf00_alloc_block_a *b = a->m_alloc_block_chain;

@@ -358,6 +358,31 @@ typedef struct cf00_ternary_relation
 } cf00_ternary_relation;
 
 
+
+
+
+struct cf00_xyzabc;
+
+
+typedef struct cf00_xyzabc_allocator
+{
+    struct cf00_alloc_block_a *m_alloc_block_chain;
+    char *m_free_chain_char_buf_16;
+    char *m_free_chain_char_buf_32;
+    char *m_free_chain_char_buf_64;
+    struct cf00_xyzabc *m_free_chain_xyzabc;
+} cf00_xyzabc_allocator;
+
+void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
+void cf00_xyzabc_alloc_clear(cf00_xyzabc_allocator *a);
+cf00_string *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
+void cf00_free_xyzabc(struct cf00_xyzabc *s);
+void cf00_xyzabc_alloc_debug_dump(cf00_xyzabc_allocator *a);
+uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a, char *err_msg,
+    const size_t max_err_msg_len);
+
+
+
 #endif
 
 
