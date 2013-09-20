@@ -360,17 +360,32 @@ typedef struct cf00_ternary_relation
 
 
 
+/* unmanaged type */
+typedef struct cf00_xyz
+{
+    int m_x;
+    size_t m_y;
+    double m_z;
+} cf00_xyz;
 
-struct cf00_xyzabc;
+struct cf00_xyzabc_allocator;
+
+typedef struct cf00_xyzabc
+{
+    cf00_managed_object_data m_object_data; /* must be first */
+    cf00_xyz *m_xyz_array;
+    uint32 m_xyz_array_length;
+    uint32 m_xyz_array_capacity;
+} cf00_xyzabc;
 
 
 typedef struct cf00_xyzabc_allocator
 {
     struct cf00_alloc_block_a *m_alloc_block_chain;
-    char *m_free_chain_char_buf_16;
-    char *m_free_chain_char_buf_32;
-    char *m_free_chain_char_buf_64;
-    struct cf00_xyzabc *m_free_chain_xyzabc;
+    cf00_xyz *m_free_chain_xyz_buf_16;
+    cf00_xyz *m_free_chain_xyz_buf_32;
+    cf00_xyz *m_free_chain_xyz_buf_64;
+    cf00_xyzabc *m_free_chain_xyzabc;
 } cf00_xyzabc_allocator;
 
 void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
