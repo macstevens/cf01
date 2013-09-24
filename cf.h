@@ -378,6 +378,14 @@ typedef struct cf00_xyzabc
     uint32 m_xyz_array_capacity;
 } cf00_xyzabc;
 
+void cf00_xyzabc_init(cf00_xyzabc *x);
+void cf00_xyzabc_clear(cf00_xyzabc *x);
+int cf00_xyzabc_compare(const cf00_xyzabc *x, const cf00_xyzabc *y);
+void cf00_xyzabc_resize_xyz_array(cf00_xyzabc *x, const uint32 new_sz);
+void cf00_xyzabc_reserve(cf00_xyzabc *x, const uint32 new_cap);
+void cf00_xyzabc_assign(cf00_xyzabc *dest, const cf00_xyzabc *src);
+uint64 cf00_xyzabc_verify_data(const cf00_xyzabc *x, cf00_string *err_msg);
+
 
 typedef struct cf00_xyzabc_allocator
 {
@@ -390,7 +398,7 @@ typedef struct cf00_xyzabc_allocator
 
 void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
 void cf00_xyzabc_alloc_clear(cf00_xyzabc_allocator *a);
-cf00_string *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
+cf00_xyzabc *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
 void cf00_free_xyzabc(struct cf00_xyzabc *s);
 void cf00_xyzabc_alloc_debug_dump(cf00_xyzabc_allocator *a);
 uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a, char *err_msg,
