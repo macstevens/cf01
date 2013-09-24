@@ -400,9 +400,18 @@ void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
 void cf00_xyzabc_alloc_clear(cf00_xyzabc_allocator *a);
 cf00_xyzabc *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
 void cf00_free_xyzabc(struct cf00_xyzabc *s);
+
+#if 0
+static void cf00_sa_allocate_block(cf00_string_allocator *a);
+static char *cf00_allocate_char_buf(cf00_string_allocator *a, 
+    const uint32 capacity);
+static void cf00_free_char_buf(cf00_string_allocator *a, char *buf, 
+    const uint32 capacity);
+#endif
+
 void cf00_xyzabc_alloc_debug_dump(cf00_xyzabc_allocator *a);
-uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a, char *err_msg,
-    const size_t max_err_msg_len);
+uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a,
+    cf00_string *err_msg);
 
 
 
