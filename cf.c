@@ -218,7 +218,7 @@ extern void cf00_str_init(cf00_string *s)
 
 /* 
 clear string
-also, prepare for freeing raw memory of struct cf00_string_allocator itself */
+also, prepare for freeing raw memory of struct cf00_string itself */
 extern void cf00_str_clear(cf00_string *s)
 {
     if (NULL != s)
@@ -269,7 +269,7 @@ void cf00_str_resize(cf00_string *s, const uint32 new_sz)
 
 void cf00_str_reserve(cf00_string *s, const uint32 new_cap)
 {
-    if (NULL != s && s->m_capacity <= new_cap)
+    if (NULL != s && s->m_capacity < new_cap)
     {
         // allocate new buffer
         uint32 new_capacity;
@@ -304,6 +304,7 @@ void cf00_str_reserve(cf00_string *s, const uint32 new_cap)
         }
         assert(new_capacity >= new_cap);
         char *new_buf = cf00_allocate_char_buf(s->m_allocator, new_capacity);
+
         /* copy buffer contents */
         if (NULL != s->m_char_buf) {        
             memcpy(new_buf, s->m_char_buf, s->m_length);
@@ -436,7 +437,7 @@ void cf00_str_vec_init(cf00_str_vec *sv)
 
 /* 
 clear string vector
-also, prepare for freeing raw memory of struct cf00_string_allocator itself */
+also, prepare for freeing raw memory of struct cf00_str_vec itself */
 void cf00_str_vec_clear(cf00_str_vec *sv)
 {
     if (NULL != sv)
@@ -922,3 +923,72 @@ uint64 cf00_str_alloc_verify_data(const cf00_string_allocator *a,
 
 
 
+
+
+
+
+/* cf00_xyz & cf00_xyzabc & cf00_xyzabc_allocator: template code */
+
+
+
+/* initialize raw memory */
+extern void cf00_xyzabc_init(cf00_xyzabc *x)
+{
+    assert(NULL != x);
+    memset (x, 0, sizeof(cf00_xyzabc));
+
+    /* initialize cf00_managed_object_data */
+    (x->m_object_data).m_object_type = CF00_OT_XYZABC;
+    (x->m_object_data).m_rev_ptr_ctr_type = CF00_RPCT_ARRAY_3;
+    assert(NULL == (x->m_object_data).m_allocator);
+    assert(NULL == (x->m_object_data).m_rev_ptr_array_3[0]);
+    assert(NULL == (x->m_object_data).m_rev_ptr_array_3[1]);
+    assert(NULL == (x->m_object_data).m_rev_ptr_array_3[2]);
+}
+
+/* 
+clear xyzabc
+also, prepare for freeing raw memory of struct cf00_xyzabc itself */
+extern void cf00_xyzabc_clear(cf00_xyzabc *x)
+{
+    if (NULL != x)
+    {
+        /* TODO: iterate reverse pointers in m_object_data.m_rev_ptr_(container)
+           remove pointer to this object.  clear rev_ptr container */
+
+        if (NULL != x->m_xyz_array) {
+        //    cf00_free_xyz_buf((cf00_xyzabc_allocator *)
+        //        ((x->m_object_data).m_allocator), x->m_xyz_array,
+        //        x->m_xyz_array_capacity);
+        }      
+        x->m_xyz_array = NULL;
+        x->m_xyz_array_length = 0;
+        x->m_xyz_array_capacity = 0;
+    }
+}
+
+#if 0
+int cf00_xyzabc_compare(const cf00_xyzabc *x, const cf00_xyzabc *y);
+void cf00_xyzabc_resize_xyz_array(cf00_xyzabc *x, const uint32 new_sz);
+void cf00_xyzabc_reserve_xyz_array(cf00_xyzabc *x, const uint32 new_cap);
+void cf00_xyzabc_assign(cf00_xyzabc *dest, const cf00_xyzabc *src);
+uint64 cf00_xyzabc_verify_data(const cf00_xyzabc *x, cf00_string *err_msg);
+
+
+static void cf00_sa_allocate_block(cf00_string_allocator *a);
+static xyz *cf00_allocate_xyz_buf(cf00_string_allocator *a, 
+    const uint32 capacity);
+static void cf00_free_xyz_buf(cf00_string_allocator *a, xyz *buf, 
+    const uint32 capacity);
+
+
+void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
+void cf00_xyzabc_alloc_clear(cf00_xyzabc_allocator *a);
+cf00_xyzabc *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
+void cf00_free_xyzabc(struct cf00_xyzabc *s);
+
+void cf00_xyzabc_alloc_debug_dump(cf00_xyzabc_allocator *a);
+uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a,
+    cf00_string *err_msg);
+
+#endif

@@ -657,6 +657,28 @@ another file
   | 
   
 
+-------------------------------------------------------------------------------
+Markup Languages / Annotation Systems
+
+http://techcrunch.com/2007/04/10/5-ways-to-mark-up-the-web/
+protonotes.com
+https://www.diigo.com/
+http://en.wikipedia.org/wiki/ShiftSpace
+http://en.wikipedia.org/wiki/Reframe_It
+http://en.wikipedia.org/wiki/Web_annotation
+http://en.wikipedia.org/wiki/Text_annotation
+https://gitorious.org/stet
+https://lite.co-ment.com/
+http://en.wikipedia.org/wiki/Org-mode
+http://orgmode.org/
+https://github.com/reddit/
+https://github.com/reddit/reddit/blob/master/r2/r2/models/link.py
+
+
+
+
+
+
 
 
 
