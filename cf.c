@@ -167,11 +167,13 @@ static cf00_string **cf00_allocate_string_ptr_array(cf00_string_allocator *a,
     return string_ptr_array;
 }
 
+/**
+precondition: all strings in array have been freed or ownership
+has been passed to a new array, etc.
+*/
 static void cf00_free_string_ptr_array(cf00_string_allocator *a,
     cf00_string **str_ptr_array, const uint32 capacity)
 {
-// need to deal with strings allocated
-
     assert(NULL != str_ptr_array);
     if (NULL == a) {
         free(str_ptr_array);
@@ -216,7 +218,7 @@ extern void cf00_str_init(cf00_string *s)
 
 /* 
 clear string
-also, prepare for freeing raw memory of struct cf00_string_allocator itself */
+also, prepare for freeing raw memory of struct cf00_string itself */
 extern void cf00_str_clear(cf00_string *s)
 {
     if (NULL != s)
@@ -267,7 +269,7 @@ void cf00_str_resize(cf00_string *s, const uint32 new_sz)
 
 void cf00_str_reserve(cf00_string *s, const uint32 new_cap)
 {
-    if (NULL != s && s->m_capacity <= new_cap)
+    if (NULL != s && s->m_capacity < new_cap)
     {
         // allocate new buffer
         uint32 new_capacity;
@@ -302,6 +304,7 @@ void cf00_str_reserve(cf00_string *s, const uint32 new_cap)
         }
         assert(new_capacity >= new_cap);
         char *new_buf = cf00_allocate_char_buf(s->m_allocator, new_capacity);
+
         /* copy buffer contents */
         if (NULL != s->m_char_buf) {        
             memcpy(new_buf, s->m_char_buf, s->m_length);
@@ -434,15 +437,24 @@ void cf00_str_vec_init(cf00_str_vec *sv)
 
 /* 
 clear string vector
-also, prepare for freeing raw memory of struct cf00_string_allocator itself */
+also, prepare for freeing raw memory of struct cf00_str_vec itself */
 void cf00_str_vec_clear(cf00_str_vec *sv)
 {
     if (NULL != sv)
     {
         if (NULL != sv->m_str_array) {
+            /* free individual strings */
+            cf00_string **s = sv->m_str_array;
+            cf00_string ** const s_end = s + (sv->m_size);
+            for (; s_end != s; ++s)
+            {
+                cf00_free_string(*s);
+            }
+
+            /* free array */
             cf00_free_string_ptr_array(sv->m_allocator, sv->m_str_array,
                 sv->m_capacity);
-        }      
+        }
         sv->m_str_array = NULL;
         sv->m_size = 0;
         sv->m_capacity = 0;
@@ -486,6 +498,17 @@ int cf00_str_vec_compare(const cf00_str_vec *x, const cf00_str_vec *y)
 void cf00_str_vec_resize(cf00_str_vec *sv, const uint32 new_sz)
 {
     if (NULL != sv) {
+        if (new_sz < sv->m_size)
+        {
+            /* free extra strings */
+            cf00_string **s = sv->m_str_array + new_sz;
+            cf00_string ** const s_end = sv->m_str_array + sv->m_size;
+            for (; s_end != s; ++s)
+            {
+                cf00_free_string(*s);
+                *s = NULL;
+            }
+        }
         cf00_str_vec_reserve(sv, new_sz+1);
         sv->m_size = new_sz;
     }
@@ -624,14 +647,13 @@ extern void cf00_str_alloc_init(cf00_string_allocator *a)
     memset(a, 0, sizeof(cf00_string_allocator));
 }
 
-/* prepare for freeing raw memory of struct cf00_string_allocator itself */
+/* prepare for freeing raw memory of struct cf00_string_allocator itself
+
+precondition: all strings and str_vecs cleared
+*/
 extern void cf00_str_alloc_clear(cf00_string_allocator *a)
 {
     assert(NULL != a);
-
-    /* normally, would need to clear all individual strings, but strings
-    have no internal allocated memory other than that which is in the blocks */
-
 
     /* free all blocks */
     cf00_alloc_block_a *b = a->m_alloc_block_chain;
@@ -833,11 +855,65 @@ void cf00_str_alloc_debug_dump(cf00_string_allocator *a)
 }
 
 
-uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
-    const size_t max_err_msg_len)
+uint64 cf00_str_alloc_verify_data(const cf00_string_allocator *a,
+    char *err_msg, const size_t max_err_msg_len)
 {
     uint64 error_count = 0;
 
+    if (NULL != a)
+    {
+        static const size_t max_block_count = 0x1000000;
+        size_t i;
+        size_t count = 0;
+        cf00_alloc_block_a *b = a->m_alloc_block_chain;
+        while (NULL != b && count <= max_block_count) {
+            /* verify block */
+            b = b->m_next_alloc_block;
+            ++count;
+        }
+
+#if 0
+        for (i = 0; i < char_buf_free_chn_count; ++i) {
+            const char_ptr_int data = char_buf_free_chn_sz[i];
+            char *free_chain = data.m_c;
+            int char_buf_sz = data.m_i;
+            count = 0;
+            while (NULL != free_chain) {
+                free_chain = *((char**)free_chain);
+                ++count;
+            }
+            printf("  CHAR BUF[%i] FREE CHAIN SIZE:%i\n", char_buf_sz, count);
+        }
+
+        count = 0;
+        cf00_string *sfc = a->m_free_chain_string;
+        while (NULL != sfc) {
+            sfc = (cf00_string *)(sfc->m_char_buf);
+            ++count;
+        }
+        printf("  STRING FREE CHAIN SIZE:%i\n", count);
+
+        for (i = 0; i < str_array_free_chn_count; ++i) {
+            const str_ptr_int data = str_array_free_chn_sz[i];
+            cf00_string **free_chain = data.m_s;
+            int str_array_sz = data.m_i;
+            count = 0;
+            while (NULL != free_chain) {
+                free_chain = *((cf00_string***)free_chain);
+                ++count;
+            }
+            printf("  STR ARRAY[%i] FREE CHAIN SIZE:%i\n", str_array_sz, count);
+        }
+
+        count = 0;
+        cf00_str_vec *svfc = a->m_free_chain_str_vec;
+        while (NULL != svfc) {
+            svfc = (cf00_str_vec *)(svfc->m_str_array);
+            ++count;
+        }
+#endif
+
+    }
 
     return error_count;
 }
@@ -847,3 +923,72 @@ uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
 
 
 
+
+
+
+
+/* cf00_xyz & cf00_xyzabc & cf00_xyzabc_allocator: template code */
+
+
+
+/* initialize raw memory */
+extern void cf00_xyzabc_init(cf00_xyzabc *x)
+{
+    assert(NULL != x);
+    memset (x, 0, sizeof(cf00_xyzabc));
+
+    /* initialize cf00_managed_object_data */
+    (x->m_object_data).m_object_type = CF00_OT_XYZABC;
+    (x->m_object_data).m_rev_ptr_ctr_type = CF00_RPCT_ARRAY_3;
+    assert(NULL == (x->m_object_data).m_allocator);
+    assert(NULL == (x->m_object_data).m_rev_ptr_array_3[0]);
+    assert(NULL == (x->m_object_data).m_rev_ptr_array_3[1]);
+    assert(NULL == (x->m_object_data).m_rev_ptr_array_3[2]);
+}
+
+/* 
+clear xyzabc
+also, prepare for freeing raw memory of struct cf00_xyzabc itself */
+extern void cf00_xyzabc_clear(cf00_xyzabc *x)
+{
+    if (NULL != x)
+    {
+        /* TODO: iterate reverse pointers in m_object_data.m_rev_ptr_(container)
+           remove pointer to this object.  clear rev_ptr container */
+
+        if (NULL != x->m_xyz_array) {
+        //    cf00_free_xyz_buf((cf00_xyzabc_allocator *)
+        //        ((x->m_object_data).m_allocator), x->m_xyz_array,
+        //        x->m_xyz_array_capacity);
+        }      
+        x->m_xyz_array = NULL;
+        x->m_xyz_array_length = 0;
+        x->m_xyz_array_capacity = 0;
+    }
+}
+
+#if 0
+int cf00_xyzabc_compare(const cf00_xyzabc *x, const cf00_xyzabc *y);
+void cf00_xyzabc_resize_xyz_array(cf00_xyzabc *x, const uint32 new_sz);
+void cf00_xyzabc_reserve_xyz_array(cf00_xyzabc *x, const uint32 new_cap);
+void cf00_xyzabc_assign(cf00_xyzabc *dest, const cf00_xyzabc *src);
+uint64 cf00_xyzabc_verify_data(const cf00_xyzabc *x, cf00_string *err_msg);
+
+
+static void cf00_sa_allocate_block(cf00_string_allocator *a);
+static xyz *cf00_allocate_xyz_buf(cf00_string_allocator *a, 
+    const uint32 capacity);
+static void cf00_free_xyz_buf(cf00_string_allocator *a, xyz *buf, 
+    const uint32 capacity);
+
+
+void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
+void cf00_xyzabc_alloc_clear(cf00_xyzabc_allocator *a);
+cf00_xyzabc *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
+void cf00_free_xyzabc(struct cf00_xyzabc *s);
+
+void cf00_xyzabc_alloc_debug_dump(cf00_xyzabc_allocator *a);
+uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a,
+    cf00_string *err_msg);
+
+#endif

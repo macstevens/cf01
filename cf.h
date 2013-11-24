@@ -27,6 +27,8 @@ typedef enum
     CF00_OT_OBJECT = 0,
     CF00_OT_PROCEDURE,
 
+    CF00_OT_XYZABC,     /* template code */
+
     CF00_OT_COUNT
 } cf00_managed_object_type;
 
@@ -39,6 +41,16 @@ typedef enum
 
     CF00_RPCT_COUNT
 } cf00_reverse_pointer_container_type;
+
+
+
+/* TODO: add global allocator
+  struct cf00_global_allocator {
+    cf00_string_allocator *m_string_alloc;
+    cf00_xyzabc_allocator *m_xyzabc_alloc;
+  }
+
+  Every allocator points to its parent global allocator */
 
 struct cf00_string_allocator;
 
@@ -114,7 +126,7 @@ cf00_str_vec *cf00_allocate_str_vec(cf00_string_allocator *a);
 void cf00_free_string(cf00_string *s);
 void cf00_free_str_vec(cf00_str_vec *sv);
 void cf00_str_alloc_debug_dump(cf00_string_allocator *a);
-uint64 cf00_str_alloc_verify_data(const cf00_str_vec *sv, char *err_msg,
+uint64 cf00_str_alloc_verify_data(const cf00_string_allocator *a, char *err_msg,
     const size_t max_err_msg_len);
 
 typedef void *cf00_void_ptr_array3[3];
@@ -159,11 +171,111 @@ void cf00_mng_obj_remove_rev_ptr(cf00_managed_object_data *obj_data, void *p);
 boolean cf00_mng_obj_has_rev_ptr(const cf00_managed_object_data *obj_data,
     const void *p);
 
+
+struct cf00_data_type;
+
+struct cf00_data_struct;
+
+typedef struct cf00_data_struct_element
+{
+    struct cf00_data_type *m_data_type;
+    cf00_string *m_name;
+} cf00_data_struct_element;
+
+typedef struct cf00_data_struct
+{
+    cf00_managed_object_data m_object_data; /* must be first */
+    cf00_data_struct_element *m_data_type_array;
+    uint32 m_data_type_array_length;
+    uint32 m_data_type_array_capacity;
+} cf00_data_struct;
+
+
+
+
 typedef struct cf00_procedure
 {
     cf00_managed_object_data m_object_data; /* must be first */
 
+    struct cf00_data_struct *m_data_struct;
+
+    /*
+    data
+      data type    name
+      data type    name
+      data type    name
+      pointer type
+        owning pointer
+        non-owning pointer
+        shared ownership pointer
+          automatic garbage collected pointer
+      textual representation
+      image representation
+      debug output procedure[s]
+      text comment[s]
+
+
+
+    main procedure = essential to achieve post conditions
+    sub-optional procedures    = sub-procedures or instructions interlaced with the main instruction sequence -- purpose is to support assertions or debug output
+
+
+    preconditions
+    postconditions
+    intermediate assertions
+    textual representation[s]
+    image representation[s]
+    compiled representation[s]
     
+    instruction sequence
+      sequence point
+      instruction
+      sequence point
+      instruction
+      sequence point
+      instruction
+      sequence point
+      instruction
+      sequence point
+
+    
+
+    sequence point
+      prev instruction[s]
+      next instruction[s]
+      checks
+
+    
+ 
+    instruction
+      prev sequence point[s]
+      next sequence point[s]
+      parent procedure[s]
+        main parent procedure
+        optional parent procedure
+      implementation procedure
+      map from parent procedure data to implementation procedure data
+      instruction type: assertion, nop, ordinary instruction, branch instruction
+      if assertion
+        required optional procedure
+      link to text representation
+      link to alternate equivalent instruction
+      link to other representation
+
+
+
+
+required procedure = main procedure
+optional procedure = 
+  required to perform assertion
+assertion
+  warning
+    % confidence
+  error
+
+
+
+    */
     
 } cf00_procedure;
 
@@ -256,6 +368,64 @@ typedef struct cf00_ternary_relation
     void *m_object_2;
 
 } cf00_ternary_relation;
+
+
+/* cf00_xyz & cf00_xyzabc & cf00_xyzabc_allocator: template code */
+
+/* unmanaged type */
+typedef struct cf00_xyz
+{
+    int m_x;
+    size_t m_y;
+    double m_z;
+} cf00_xyz;
+
+struct cf00_xyzabc_allocator;
+
+/* managed type */
+typedef struct cf00_xyzabc
+{
+    cf00_managed_object_data m_object_data; /* must be first */
+    cf00_xyz *m_xyz_array;
+    uint32 m_xyz_array_length;
+    uint32 m_xyz_array_capacity;
+} cf00_xyzabc;
+
+void cf00_xyzabc_init(cf00_xyzabc *x);
+void cf00_xyzabc_clear(cf00_xyzabc *x);
+int cf00_xyzabc_compare(const cf00_xyzabc *x, const cf00_xyzabc *y);
+void cf00_xyzabc_resize_xyz_array(cf00_xyzabc *x, const uint32 new_sz);
+void cf00_xyzabc_reserve_xyz_array(cf00_xyzabc *x, const uint32 new_cap);
+void cf00_xyzabc_assign(cf00_xyzabc *dest, const cf00_xyzabc *src);
+uint64 cf00_xyzabc_verify_data(const cf00_xyzabc *x, cf00_string *err_msg);
+
+
+typedef struct cf00_xyzabc_allocator
+{
+    struct cf00_alloc_block_a *m_alloc_block_chain;
+    cf00_xyz *m_free_chain_xyz_buf_16;
+    cf00_xyz *m_free_chain_xyz_buf_32;
+    cf00_xyz *m_free_chain_xyz_buf_64;
+    cf00_xyzabc *m_free_chain_xyzabc;
+} cf00_xyzabc_allocator;
+
+#if 0
+static void cf00_sa_allocate_block(cf00_string_allocator *a);
+static xyz *cf00_allocate_xyz_buf(cf00_string_allocator *a, 
+    const uint32 capacity);
+static void cf00_free_xyz_buf(cf00_string_allocator *a, xyz *buf, 
+    const uint32 capacity);
+#endif
+
+void cf00_xyzabc_alloc_init(cf00_xyzabc_allocator *a);
+void cf00_xyzabc_alloc_clear(cf00_xyzabc_allocator *a);
+cf00_xyzabc *cf00_allocate_xyzabc(cf00_xyzabc_allocator *a);
+void cf00_free_xyzabc(struct cf00_xyzabc *s);
+
+void cf00_xyzabc_alloc_debug_dump(cf00_xyzabc_allocator *a);
+uint64 cf00_xyzabc_alloc_verify_data(const cf00_xyzabc_allocator *a,
+    cf00_string *err_msg);
+
 
 
 #endif
