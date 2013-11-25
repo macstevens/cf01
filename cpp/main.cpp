@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <map>
 #include <vector>
@@ -6,7 +7,28 @@
 //#include <stdio.h>
 
 
+//#define CF_DEBUG_ASSERT( _condition_ ) assert(_condition)
+#define CF_DEBUG_ASSERT( _condition_ ) {if(!(_condition)) throw -1; }
+#define CF_ASSERT( _condition_ ) assert(_condition_)
+
 typedef unsigned long long int uint64;
+
+
+
+/* 
+
+CF control file
+  cf log file path
+  
+
+
+
+CF log file
+ CF control file name, md5 sum
+ <assertion number, assertion_result = pass/fail/not run >
+
+
+*/
 
 /*
 INPUT:
@@ -15,7 +37,7 @@ INPUT:
 30, 3
 
 MEANING:
-0<=i<20  => result=((i%5)==4)
+ 0<=i<20 => result=((i%5)==4)
 20<=i<30 => result=((i%2)==1)
 30<=i    => result=((i%3)==2)
 [ 0] F  [ 1] F  [ 2] F  [ 3] F  [ 4] T  [ 5] F  [ 6] F  [ 7] F  [ 8] F  [ 9] T
@@ -38,10 +60,6 @@ public:
            if (m_lower_bound_modulus_map.empty()) {
                result = false;
                }
- //          else if (0 == i)
- //              {
- //              result = (2 > m_lower_bound_modulus_map.begin()->second);
- //              }
            else {
                std::map<uint64,uint64>::const_iterator map_lb =
                    m_lower_bound_modulus_map.upper_bound(i);
@@ -55,7 +73,28 @@ public:
                    }
                }
            }
-       }
+       CF_DEBUG_ASSERT(bool_get_double_check() == result);
+       return result;
+    }
+    bool bool_get_double_check(const uint64& i) const {
+        enum Result { R_FALSE, R_TRUE, R_UNKNOWN };
+        Result result = R_UNKNOWN;
+        std::map<uint64,uint64>::const_iterator map_itr =
+           m_lower_bound_modulus_map.begin();
+        for (; map_itr!=m_lower_bound_modulus_map.end() && R_UNKNOWN == result; 
+             ++map_itr) {
+            if (map_itr->first <= i) {
+                if (m_lower_bound_modulus_map.begin() == map_itr) {
+                    result = R_FALSE;                
+                }
+                else {
+                    --map_itr;
+                    const uint64& m = map_itr->second;
+                    result = ((m < 2) || (((i)%m)==m-1)) ? R_TRUE : R_FALSE; 
+                }
+            }
+        return (R_TRUE == result);
+        }
 private:
     std::map<uint64, uint64> m_lower_bound_modulus_map;
 };
