@@ -91,22 +91,68 @@ void cf01_mng_obj_remove_rev_ptr(cf01_managed_object_data *obj_data, void *p);
 boolean cf01_mng_obj_has_rev_ptr(const cf01_managed_object_data *obj_data,
     const void *p);
 
-void cf01_write_mng_obj(cf01_writer *w, cf01_managed_object_data *obj_data)
+
+int cf01_save_fputc(void *ostream, const uint8 ch)
 {
-    w->write_open_tag("obj_data");
-    w->write_line_break();
-    w->write_open_tag("obj_type");
-    w->write_string(/*m_object_type to string */);
-    w->write_close_tag("obj_type");
-    w->write_line_break();
+const int fputc_result = fputc((int)ch, (FILE *)ostream);
+return (fputc_result == (int)ch) ? EXIT_SUCCESS : EXIT_FAILURE;
+}
+
+typedef int (cf01_save_putc_func *)(void *, const uint8);
+
+typedef struct cf01_save_writer
+{
+    cf01_save_putc_func m_putc_func;
+    void *ostream;
+    uint64 m_error_count;
+} cf01_save_writer;
+
+void cf00_save_log_error(cf01_save_writer *w, const int err_code,
+    const char *err_msg);
+{
+    assert(NULL != w);
+    ++(w->m_error_count); 
+}
+
+void cf00_save_write_char_buf(cf01_save_writer *w, const char *buf)
+{
+    const char *ch;
+    int putc_result = EXIT_SUCCESS;
+    if (NULL != buf & NULL != w->m_putc_func && NULL != w->ostream)
+    {
+        ch = buf;
+        while (*ch != 0x0 && EXIT_SUCCESS == putc_result)
+        {
+            putc_result = (*(w->m_putc_func))(w->ostream, *ch);
+            if (EXIT_SUCCESS != putc_result)
+                {
+                cf00_save_log_error(w, 0, "putc failure");
+                }
+            ++ch;
+        }
+    }
+}
+
+int fputc( int ch, FILE *stream );
+	
+void cf01_save_write_mng_obj(cf01_save_writer *w, const cf01_managed_object_data *obj_data)
+{
+    cf00_save_write_open_tag(w, "obj_data");
+    cf00_save_write_line_break(w);
+    cf00_save_write_open_tag(w, "obj_type");
+    cf00_save_write_char_buf(w, ""/*m_object_type to string */);
+    cf00_save_write_close_tag(w, "obj_type");
+    cf00_save_write_line_break(w);
 
     /* ... */
  
-    w->write_close_tag("obj_data");
+    w-cf00_save_write_close_tag("obj_data");
 
 
 }
 
+
+void 
 
 
 
