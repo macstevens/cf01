@@ -13,7 +13,7 @@
 
 
 
-static const cf00_unit_test const cf00_basic_unit_tests[] =
+static const cf00_unit_test cf00_basic_unit_tests[] =
 {
     {   "string_test",          &cf00_run_string_test },
     {   "str_vec_test",         &cf00_run_str_vec_test }

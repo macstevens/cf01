@@ -100,9 +100,8 @@ typedef struct cf00_unit_test_suite
 int cf00_run_unit_test_suite_main(int argc, char *argv[],
     const cf00_unit_test_suite *unit_test_suite);
 
-int cf00_run_test_suite(const cf00_unit_test_suite *unit_test_suite,
+int cf00_run_unit_test_suite(const cf00_unit_test_suite *unit_test_suite,
     const uint32 random_seed, const uint32 iteration_count);
-
 
 /*
 void cf00_run_unit_test(func *, randomseed, cf00_unit_test_data, iteration count)

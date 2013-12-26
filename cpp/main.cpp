@@ -1,14 +1,22 @@
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <map>
 #include <vector>
 
-//#include <stdlib.h>
+
 //#include <stdio.h>
 
+#include "../cf.h"
+#include "../cf_basic_test_suite.h"
+#include "../cf_unit_test.h"
 
-//#define CF_DEBUG_ASSERT( _condition_ ) assert(_condition)
-#define CF_DEBUG_ASSERT( _condition_ ) {if(!(_condition)) throw -1; }
+typedef cf00_string cf01_string;
+typedef cf00_str_vec cf01_str_vec;
+
+
+//#define CF_DEBUG_ASSERT( _condition_ ) assert(_condition_)
+#define CF_DEBUG_ASSERT( _condition_ ) {if(!(_condition_)) throw -1; }
 #define CF_ASSERT( _condition_ ) assert(_condition_)
 
 
@@ -98,61 +106,103 @@ const int fputc_result = fputc((int)ch, (FILE *)ostream);
 return (fputc_result == (int)ch) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
-typedef int (cf01_save_putc_func *)(void *, const uint8);
+typedef int (* cf01_save_putc_func)(void *, const uint8);
 
 typedef struct cf01_save_writer
 {
     cf01_save_putc_func m_putc_func;
     void *ostream;
+    uint16 m_indent_count;
     uint64 m_error_count;
 } cf01_save_writer;
 
-void cf00_save_log_error(cf01_save_writer *w, const int err_code,
-    const char *err_msg);
+void cf01_save_log_error(cf01_save_writer *w, const int err_code,
+    const char *err_msg)
 {
     assert(NULL != w);
     ++(w->m_error_count); 
 }
 
-void cf00_save_write_char_buf(cf01_save_writer *w, const char *buf)
+void cf01_save_write_char_buf(cf01_save_writer *w, const char *buf)
 {
     const char *ch;
     int putc_result = EXIT_SUCCESS;
-    if (NULL != buf & NULL != w->m_putc_func && NULL != w->ostream)
+    if (NULL != buf & NULL != w && NULL != w->m_putc_func && NULL != w->ostream)
     {
         ch = buf;
         while (*ch != 0x0 && EXIT_SUCCESS == putc_result)
         {
+            /* TODO: convert control or non-readble characters to escape sequence */
             putc_result = (*(w->m_putc_func))(w->ostream, *ch);
             if (EXIT_SUCCESS != putc_result)
                 {
-                cf00_save_log_error(w, 0, "putc failure");
+                cf01_save_log_error(w, 0, "putc failure");
                 }
             ++ch;
         }
     }
 }
 
-int fputc( int ch, FILE *stream );
+void cf01_save_indent(cf01_save_writer *w)
+{
+    if (NULL != w)
+    {
+        uint16 i;
+        for (i=0; i<(w->m_indent_count); ++i)
+        {
+        cf01_save_write_char_buf(w, "  ");
+        }
+    }
+}
+
+void cf01_save_write_open_tag(cf01_save_writer *w, const char *buf)
+{
+    if (NULL != buf & NULL != w)
+    {
+        ++(w->m_indent_count);
+        cf01_save_indent(w);
+        cf01_save_write_char_buf(w, "<");
+        cf01_save_write_char_buf(w, buf);
+        cf01_save_write_char_buf(w, ">");
+    }
+}
+
+void cf01_save_write_close_tag(cf01_save_writer *w, const char *buf)
+{
+    if (NULL != buf & NULL != w)
+    {
+        cf01_save_write_char_buf(w, "</");
+        cf01_save_write_char_buf(w, buf);
+        cf01_save_write_char_buf(w, ">");
+        --(w->m_indent_count);
+    }
+}
+
+void cf01_save_write_newline(cf01_save_writer *w)
+{
+    if (NULL != w)
+    {
+        cf01_save_write_char_buf(w, "\n");
+    }
+}
 	
 void cf01_save_write_mng_obj(cf01_save_writer *w, const cf01_managed_object_data *obj_data)
 {
-    cf00_save_write_open_tag(w, "obj_data");
-    cf00_save_write_line_break(w);
-    cf00_save_write_open_tag(w, "obj_type");
-    cf00_save_write_char_buf(w, ""/*m_object_type to string */);
-    cf00_save_write_close_tag(w, "obj_type");
-    cf00_save_write_line_break(w);
+    cf01_save_write_open_tag(w, "obj_data");
+    cf01_save_write_newline(w);
+    cf01_save_write_open_tag(w, "obj_type");
+    cf01_save_write_char_buf(w, ""/*m_object_type to string */);
+    cf01_save_write_close_tag(w, "obj_type");
+    cf01_save_write_newline(w);
 
     /* ... */
  
-    w-cf00_save_write_close_tag("obj_data");
+    cf01_save_write_close_tag(w, "obj_data");
 
 
 }
 
 
-void 
 
 
 
@@ -392,6 +442,8 @@ MEANING:
 */
 class cf01_modulus_bool_set
 {
+private:
+    std::map<uint64, uint64> m_lower_bound_modulus_map;
 public:
     void clear() { m_lower_bound_modulus_map.clear(); }
     void add_lower_bound_modulus(const uint64& lb, const uint64& m)
@@ -415,7 +467,7 @@ public:
                    }
                }
            }
-       CF_DEBUG_ASSERT(bool_get_double_check() == result);
+       CF_DEBUG_ASSERT(bool_get_double_check(i) == result);
        return result;
     }
     bool bool_get_double_check(const uint64& i) const {
@@ -423,9 +475,8 @@ public:
         Result result = R_UNKNOWN;
         std::map<uint64,uint64>::const_iterator map_itr =
            m_lower_bound_modulus_map.begin();
-        for (; map_itr!=m_lower_bound_modulus_map.end() && R_UNKNOWN == result; 
-             ++map_itr) {
-            if (map_itr->first <= i) {
+        for (; R_UNKNOWN == result; ++map_itr) {
+            if (map_itr==m_lower_bound_modulus_map.end() || map_itr->first > i){
                 if (m_lower_bound_modulus_map.begin() == map_itr) {
                     result = R_FALSE;                
                 }
@@ -435,10 +486,9 @@ public:
                     result = ((m < 2) || (((i)%m)==m-1)) ? R_TRUE : R_FALSE; 
                 }
             }
-        return (R_TRUE == result);
         }
-private:
-    std::map<uint64, uint64> m_lower_bound_modulus_map;
+        return (R_TRUE == result);
+    }
 };
 
 
@@ -465,4 +515,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
 
