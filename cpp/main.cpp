@@ -1,11 +1,12 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <map>
-#include <vector>
 
+#ifdef __cplusplus
+    #include <map>
+    #include <vector>
+#endif
 
-//#include <stdio.h>
 
 #include "../cf.h"
 #include "../cf_basic_test_suite.h"
@@ -88,9 +89,29 @@ typedef struct cf01_managed_object_data
     void *m_allocator;
     union
     {
-        cf01_void_ptr_array3 m_rev_ptr_array_3;
-        cf01_ptr_list m_rev_ptr_list;
-        /* tree */
+        cf01_void_ptr_array3 m_rev_ptr_array_3; /* can contain duplicates */
+        cf01_ptr_list m_rev_ptr_list;           /* can contain duplicates */
+        /* multimap + list 
+        std::list<void *> m_ptr_list;
+        std::multimap<void *, std::list<void *>::iterator> m_ptr_list_lookup_mmap;
+        void insert_ptr(p) {
+            search in lookup map
+                found: insert after last same item in list
+                not found: insert at end of list
+        */
+
+/*
+basic operations
+  save
+  load
+  compare
+  copy
+  hash
+  hash_depth_1
+  hash_depth_2
+  hash_depth_3
+
+*/
     };
 } cf01_managed_object_data;
 
@@ -106,7 +127,90 @@ const int fputc_result = fputc((int)ch, (FILE *)ostream);
 return (fputc_result == (int)ch) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
+/* Thomas Wang's 64-bit integer hash 
+http://naml.us/blog/tag/thomas-wang
+https://gist.github.com/badboy/6267743 hash64shift()
+*/
+uint64 cf01_void_ptr_wang_hash_64(const void *p)
+{
+    uint64 k = (uint64)p;
+    k = (~k) + (k << 21); // k = (k << 21) - k - 1;
+    k = k ^ (k >> 24);
+    k = (k + (k << 3)) + (k << 8); // k * 265
+    k = k ^ (k >> 14);
+    k = (k + (k << 2)) + (k << 4); // k * 21
+    k = k ^ (k >> 28);
+    k = k + (k << 31);
+    return k;
+}
+
 typedef int (* cf01_save_putc_func)(void *, const uint8);
+
+typedef uint64 cf01_object_handle;
+
+typedef struct cf01_void_ptr_obj_handle_map
+{
+#ifdef __cplusplus
+    typedef std::pair<uint64, const void *> key_t;
+    typedef std::pair<key_t, cf01_object_handle> kv_t;
+    typedef std::map<key_t, cf01_object_handle> map_t;
+    typedef map_t::iterator map_itr_t;
+    typedef map_t::const_iterator map_citr_t;
+    map_t m_ptr_hndl_map;
+#else
+    /* not yet implemented in C */
+#endif
+} cf01_void_ptr_obj_handle_map;
+
+
+void cf01_void_ptr_obj_handle_map_clear(cf01_void_ptr_obj_handle_map *m)
+{
+    if (NULL != m)
+    {
+    (m->m_ptr_hndl_map).clear();
+    }
+}
+
+/*
+insert pointer in map, get handle
+input:p
+output:h
+*/
+void cf01_void_ptr_obj_handle_map_insert(cf01_void_ptr_obj_handle_map *m,
+    const void *p, uint64 *h)
+{
+    uint64 hndl = 0;
+    if (NULL != m)
+    {
+#ifdef __cplusplus
+        cf01_void_ptr_obj_handle_map::key_t key;
+        cf01_void_ptr_obj_handle_map::map_itr_t lb;
+        key.first = cf01_void_ptr_wang_hash_64(p);
+        key.second = p;
+        lb = (m->m_ptr_hndl_map).lower_bound(key);
+        if (lb->first == key)
+        {
+            /* found in map */
+            hndl = lb->second;
+        }
+        else
+        {
+            /* not found, need to insert */
+            cf01_void_ptr_obj_handle_map::kv_t kv;
+            hndl = (m->m_ptr_hndl_map).size();
+            kv.first = key;
+            kv.second = hndl;
+            (m->m_ptr_hndl_map).insert(lb, kv);            
+        }
+#else
+        /* not yet implemented in C */
+#endif
+    }
+    if (NULL != h)
+    {
+        *h = hndl;
+    }
+}
 
 typedef struct cf01_save_writer
 {
@@ -114,6 +218,7 @@ typedef struct cf01_save_writer
     void *ostream;
     uint16 m_indent_count;
     uint64 m_error_count;
+    cf01_void_ptr_obj_handle_map m_ptr_hndl_map;
 } cf01_save_writer;
 
 void cf01_save_log_error(cf01_save_writer *w, const int err_code,
@@ -188,16 +293,35 @@ void cf01_save_write_newline(cf01_save_writer *w)
 	
 void cf01_save_write_mng_obj(cf01_save_writer *w, const cf01_managed_object_data *obj_data)
 {
-    cf01_save_write_open_tag(w, "obj_data");
-    cf01_save_write_newline(w);
-    cf01_save_write_open_tag(w, "obj_type");
-    cf01_save_write_char_buf(w, ""/*m_object_type to string */);
-    cf01_save_write_close_tag(w, "obj_type");
-    cf01_save_write_newline(w);
+    if (NULL != w && NULL != obj_data)
+    {
+        cf01_save_write_open_tag(w, "obj_data");
+        cf01_save_write_newline(w);
+        cf01_save_write_open_tag(w, "obj_type");
+        cf01_save_write_char_buf(w, ""/*m_object_type to string */);
+        cf01_save_write_close_tag(w, "obj_type");
+        cf01_save_write_newline(w);
 
-    /* ... */
- 
-    cf01_save_write_close_tag(w, "obj_data");
+        /* ... */
+        switch (obj_data->m_rev_ptr_ctr_type)
+        {
+        case CF01_RPCT_NONE:
+            break;
+        case CF01_RPCT_ARRAY_3:
+            break;
+        case CF01_RPCT_LIST:
+            break;
+        case CF01_RPCT_TREE:
+            break;
+
+        case CF01_RPCT_COUNT : // fall through
+        default:
+            break;          
+        }
+
+
+        cf01_save_write_close_tag(w, "obj_data");
+    }
 
 
 }
