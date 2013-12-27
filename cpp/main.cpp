@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #ifdef __cplusplus
+    #include <list>
     #include <map>
     #include <vector>
 #endif
@@ -121,9 +122,23 @@ boolean cf01_mng_obj_has_rev_ptr(const cf01_managed_object_data *obj_data,
     const void *p);
 
 
-int cf01_save_fputc(void *ostream, const uint8 ch)
+typedef struct cf01_save_obj_ptr_list
 {
-const int fputc_result = fputc((int)ch, (FILE *)ostream);
+#ifdef __cplusplus
+    typedef std::list<const void *> list_t;
+    typedef list_t::iterator list_itr_t;
+    typedef list_t::const_iterator list_citr_t;
+    list_t m_ptr_list;
+#else
+    /* not yet implemented in C */
+#endif
+
+} cf01_save_obj_ptr_list;
+
+
+int cf01_save_file_fputc(void *output_stream, const uint8 ch)
+{
+const int fputc_result = fputc((int)ch, (FILE *)output_stream);
 return (fputc_result == (int)ch) ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
@@ -147,6 +162,8 @@ uint64 cf01_void_ptr_wang_hash_64(const void *p)
 typedef int (* cf01_save_putc_func)(void *, const uint8);
 
 typedef uint64 cf01_object_handle;
+
+const cf01_object_handle cf01_object_handle_not_found=(cf01_object_handle)(-1);
 
 typedef struct cf01_void_ptr_obj_handle_map
 {
@@ -206,20 +223,84 @@ void cf01_void_ptr_obj_handle_map_insert(cf01_void_ptr_obj_handle_map *m,
         /* not yet implemented in C */
 #endif
     }
+    CF_DEBUG_ASSERT(hndl != cf01_object_handle_not_found);
     if (NULL != h)
     {
         *h = hndl;
     }
 }
 
+
+/* get handle for void * 
+return cf01_object_handle_not_found if not found
+ */
+cf01_object_handle cf01_void_ptr_obj_handle_map_find(const cf01_void_ptr_obj_handle_map *m,
+    const void *p)
+{
+    cf01_object_handle hndl = 0;
+    if (NULL != m)
+    {
+#ifdef __cplusplus
+        cf01_void_ptr_obj_handle_map::key_t key;
+        cf01_void_ptr_obj_handle_map::map_citr_t search_itr;
+        key.first = cf01_void_ptr_wang_hash_64(p);
+        key.second = p;
+        search_itr = (m->m_ptr_hndl_map).find(key);
+        if (search_itr != (m->m_ptr_hndl_map).end())
+        {
+            hndl = search_itr->second;
+        }
+        else
+        {
+            hndl = cf01_object_handle_not_found;
+        }
+#else
+        /* not yet implemented in C */
+#endif
+    }
+    return hndl;
+}
+
+
 typedef struct cf01_save_writer
 {
     cf01_save_putc_func m_putc_func;
-    void *ostream;
+    void *m_ostream;
     uint16 m_indent_count;
     uint64 m_error_count;
     cf01_void_ptr_obj_handle_map m_ptr_hndl_map;
+    cf01_save_obj_ptr_list m_obj_list;
 } cf01_save_writer;
+
+void cf01_save_writer_clear(cf01_save_writer *w)
+{
+    if (NULL != w)
+    {
+        w->m_putc_func = NULL;
+        w->m_ostream = NULL;
+        w->m_indent_count = 0;
+        w->m_error_count = 0;
+        cf01_void_ptr_obj_handle_map_clear(&(w->m_ptr_hndl_map));
+#ifdef __cplusplus
+        (w->m_obj_list).m_ptr_list.clear();
+#else
+        /* not yet implemented in C */
+#endif
+    }
+}
+
+
+void cf01_save_add_obj(cf01_save_writer *w, const void *p)
+{
+    if (NULL != w && NULL != p)
+    {
+#ifdef __cplusplus
+        (w->m_obj_list).m_ptr_list.push_back(p);
+#else
+        /* not yet implemented in C */
+#endif
+    }
+}
 
 void cf01_save_log_error(cf01_save_writer *w, const int err_code,
     const char *err_msg)
@@ -232,13 +313,13 @@ void cf01_save_write_char_buf(cf01_save_writer *w, const char *buf)
 {
     const char *ch;
     int putc_result = EXIT_SUCCESS;
-    if (NULL != buf & NULL != w && NULL != w->m_putc_func && NULL != w->ostream)
+    if (NULL != buf & NULL != w && NULL != w->m_putc_func && NULL != w->m_ostream)
     {
         ch = buf;
         while (*ch != 0x0 && EXIT_SUCCESS == putc_result)
         {
             /* TODO: convert control or non-readble characters to escape sequence */
-            putc_result = (*(w->m_putc_func))(w->ostream, *ch);
+            putc_result = (*(w->m_putc_func))(w->m_ostream, *ch);
             if (EXIT_SUCCESS != putc_result)
                 {
                 cf01_save_log_error(w, 0, "putc failure");
@@ -327,6 +408,25 @@ void cf01_save_write_mng_obj(cf01_save_writer *w, const cf01_managed_object_data
 }
 
 
+
+void cf01_save_file_obj_recursive(void *obj, FILE *f)
+{
+    if (NULL != obj && NULL != f)
+    {
+    struct cf01_save_writer w;
+    cf01_save_writer_clear(&w);
+    w.m_putc_func = &cf01_save_file_fputc;
+    w.m_ostream = f;
+    /*
+    add object recursive
+    sort object list by 1) object type and 2) order of existing object list
+    init object handle map
+    iterate object list
+      write each object
+        convert pointers to handles
+    */
+    }
+}
 
 
 
