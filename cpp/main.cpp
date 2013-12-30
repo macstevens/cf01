@@ -5,6 +5,7 @@
 #ifdef __cplusplus
     #include <list>
     #include <map>
+    #include <stack>
     #include <vector>
 #endif
 
@@ -408,8 +409,67 @@ void cf01_save_write_mng_obj(cf01_save_writer *w, const cf01_managed_object_data
 }
 
 
+typedef struct cf01_const_void_ptr_stack
+{
+#ifdef __cplusplus
+    std::stack<const void*> m_stack;
+#else
+    /* not yet implemented in C */
+#endif
+} cf01_const_void_ptr_stack;
 
-void cf01_save_file_obj_recursive(void *obj, FILE *f)
+
+const void *cf01_const_void_ptr_stack_pop(cf01_const_void_ptr_stack *s)
+{
+    const void *t = NULL;
+#ifdef __cplusplus
+    if (NULL != s && !((s->m_stack).empty()))
+        {
+        t = (s->m_stack).top();
+        (s->m_stack).pop();
+        }
+#else
+    /* not yet implemented in C */
+#endif
+    return t;
+}
+
+void cf01_const_void_ptr_stack_pop(cf01_const_void_ptr_stack *s, const void *p)
+{
+#ifdef __cplusplus
+    if (NULL != s)
+        {
+        (s->m_stack).push(p);
+        }
+#else
+    /* not yet implemented in C */
+#endif
+}
+
+
+void cf01_save_push_procedure_sub_objs(cf01_const_void_ptr_stack *s,
+const void *obj)
+{
+                                                                                                           
+
+
+}
+
+
+typedef void (*cf01_push_sub_objects_func)(cf01_const_void_ptr_stack *s, const void *obj);
+
+static const cf01_push_sub_objects_func cf01_save_push_sub_obj_funcs[] =
+{
+    NULL,  /* CF01_OT_OBJECT */
+    &cf01_save_push_procedure_sub_objs,  /* CF01_OT_PROCEDURE */
+    NULL,  /* CF01_OT_XYZABC */
+    NULL   /* CF01_OT_COUNT */
+};
+
+
+
+
+void cf01_save_file_obj_recursive(const void *obj, FILE *f)
 {
     if (NULL != obj && NULL != f)
     {
