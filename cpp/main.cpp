@@ -36,7 +36,6 @@ typedef unsigned long long uint64;
 typedef double float64;
 
 
-
 typedef enum
 {
     CF01_OT_OBJECT = 0,
@@ -447,16 +446,22 @@ void cf01_const_void_ptr_stack_pop(cf01_const_void_ptr_stack *s, const void *p)
 }
 
 
+
 void cf01_save_push_procedure_sub_objs(cf01_const_void_ptr_stack *s,
 const void *obj)
 {
-                                                                                                           
+    if (NULL != s && NULL != obj)
+    {
+        struct cf01_procedure;
+        const cf01_procedure *procedure = (const cf01_procedure *)obj;
 
 
+    }
 }
 
 
-typedef void (*cf01_push_sub_objects_func)(cf01_const_void_ptr_stack *s, const void *obj);
+typedef void (*cf01_push_sub_objects_func)(
+    cf01_const_void_ptr_stack *s, const void *obj);
 
 static const cf01_push_sub_objects_func cf01_save_push_sub_obj_funcs[] =
 {
@@ -465,6 +470,33 @@ static const cf01_push_sub_objects_func cf01_save_push_sub_obj_funcs[] =
     NULL,  /* CF01_OT_XYZABC */
     NULL   /* CF01_OT_COUNT */
 };
+
+
+
+
+
+
+
+void cf01_save_procedure_obj(cf01_save_writer *w, const void *obj)
+{
+
+
+
+}
+
+
+typedef void (*cf01_save_obj_func)(
+    cf01_save_writer *w, const void *obj);
+
+static const cf01_save_obj_func cf01_save_obj_funcs[] =
+{
+    NULL,  /* CF01_OT_OBJECT */
+    &cf01_save_procedure_obj,  /* CF01_OT_PROCEDURE */
+    NULL,  /* CF01_OT_XYZABC */
+    NULL   /* CF01_OT_COUNT */
+};
+
+
 
 
 
