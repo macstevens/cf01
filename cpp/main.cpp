@@ -126,7 +126,14 @@ basic operations
 } cf01_managed_object_data;
 
 void cf01_mng_obj_add_rev_ptr(cf01_managed_object_data *obj_data, void *p);
-void cf01_mng_obj_remove_rev_ptr(cf01_managed_object_data *obj_data, void *p);
+
+/* remove one instance of p from obj_data reverse pointer list
+This is done when p stops pointing to the owner of obj_data */
+void cf01_mng_obj_remove_rev_ptr(cf01_managed_object_data *obj_data, void *p)
+{
+
+}
+
 boolean cf01_mng_obj_has_rev_ptr(const cf01_managed_object_data *obj_data,
     const void *p);
 
@@ -560,19 +567,20 @@ typedef struct cf01_data_struct
 
 void cf01_data_struct_init(cf01_data_struct *s)
 {
+    assert(s != NULL);
 #ifdef __cplusplus
     assert((s->m_data_type_vec).empty());
 #else
-    m_data_type_array = NULL;
-    m_data_type_array_length = 0;
-    m_data_type_array_capacity = 0;
+    s->m_data_type_array = NULL;
+    s->m_data_type_array_length = 0;
+    s->m_data_type_array_capacity = 0;
 #endif
 }
 
 
 void cf01_data_struct_clear(cf01_data_struct *s)
 {
-assert(s != NULL);
+    assert(s != NULL);
 
 #ifdef __cplusplus
     /* disconnect pointers from each data type back to *s */
@@ -582,7 +590,17 @@ assert(s != NULL);
         elem_end_itr = (s->m_data_type_vec).end();
     for( ; elem_end_itr != elem_itr; ++elem_itr )
     {
-
+        const cf01_data_struct_element *data_elem = &(*elem_itr);
+        assert(data_elem->m_data_type != NULL);
+        assert(data_elem->m_name != NULL);
+        
+        /* remove pointer from data type back to *s */
+        cf01_mng_obj_remove_rev_ptr(
+            reinterpret_cast<cf01_managed_object_data *>(  /* TODO: use data member rather than casting struct */
+            data_elem->m_data_type), s);
+        
+        /* free memory for name */
+        cf00_free_string(data_elem->m_name);
     }
     (s->m_data_type_vec).clear();
 #else
