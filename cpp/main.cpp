@@ -90,6 +90,13 @@ typedef struct cf01_managed_object_data
     void *m_allocator;
     union
     {
+        /*
+        TODO: the reverse pointer container needs to be able to store,
+        for each object that points to this:
+            1) address of object R that points to *this.
+            2) number of references from R to *this.
+
+        */
         cf01_void_ptr_array3 m_rev_ptr_array_3; /* can contain duplicates */
         cf01_ptr_list m_rev_ptr_list;           /* can contain duplicates */
         /* multimap + list 
@@ -99,6 +106,8 @@ typedef struct cf01_managed_object_data
             search in lookup map
                 found: insert after last same item in list
                 not found: insert at end of list
+
+        
         */
 
 /*
@@ -318,7 +327,7 @@ void cf01_save_write_char_buf(cf01_save_writer *w, const char *buf)
         ch = buf;
         while (*ch != 0x0 && EXIT_SUCCESS == putc_result)
         {
-            /* TODO: convert control or non-readble characters to escape sequence */
+            /* TODO: convert control or non-readable characters to escape sequence */
             putc_result = (*(w->m_putc_func))(w->m_ostream, *ch);
             if (EXIT_SUCCESS != putc_result)
                 {
@@ -535,11 +544,69 @@ typedef struct cf01_data_struct_element
 typedef struct cf01_data_struct
 {
     cf01_managed_object_data m_object_data; /* must be first */
+#ifdef __cplusplus
+    typedef std::vector<cf01_data_struct_element> data_type_vec_t;
+    typedef data_type_vec_t::iterator data_type_vec_t_itr_t;
+    typedef data_type_vec_t::const_iterator data_type_vec_citr_t;
+    data_type_vec_t m_data_type_vec;
+#else
+    /* not yet implemented in C */
     cf01_data_struct_element *m_data_type_array;
     uint32 m_data_type_array_length;
     uint32 m_data_type_array_capacity;
+#endif
+
 } cf01_data_struct;
 
+void cf01_data_struct_init(cf01_data_struct *s)
+{
+#ifdef __cplusplus
+    assert((s->m_data_type_vec).empty());
+#else
+    m_data_type_array = NULL;
+    m_data_type_array_length = 0;
+    m_data_type_array_capacity = 0;
+#endif
+}
+
+
+void cf01_data_struct_clear(cf01_data_struct *s)
+{
+assert(s != NULL);
+
+#ifdef __cplusplus
+    /* disconnect pointers from each data type back to *s */
+    cf01_data_struct::data_type_vec_citr_t
+        elem_itr = (s->m_data_type_vec).begin();
+    const cf01_data_struct::data_type_vec_citr_t 
+        elem_end_itr = (s->m_data_type_vec).end();
+    for( ; elem_end_itr != elem_itr; ++elem_itr )
+    {
+
+    }
+    (s->m_data_type_vec).clear();
+#else
+    /* not yet implemented in C */
+#endif
+
+}
+
+uint64 cf01_data_struct_verify_data(const cf01_data_struct *s, cf01_str_vec *messages);
+
+/* add data element to data struct
+copy name, update reverse pointers from m_data_type back to *s
+*/
+void cf01_data_struct_add_element(cf01_data_struct *s, 
+    struct cf01_data_type *data_type, const cf01_string *name)
+{
+assert(s != NULL);
+assert(data_type != NULL);
+assert(name != NULL);
+
+
+
+
+}
 
 
 
@@ -822,7 +889,7 @@ int main(int argc, char *argv[])
     s.add_lower_bound_modulus(30, 3);
 
 
-    printf("MAIN CPP\n");
+    printf("MAIN CPP   hello Kate\n");
     for (uint64 i = 0; i < 50; ++i)
     {
         printf("[%2i] %s ", (int)i, s.bool_get(i)?"T":"F");
