@@ -644,6 +644,7 @@ typedef struct cf01_procedure
         non-owning pointer
         shared ownership pointer
           automatic garbage collected pointer
+              possible implementation: garbage collector owns all pointers.
       textual representation
       image representation
       debug output procedure[s]
@@ -742,7 +743,7 @@ typedef struct cf01_file_data
   
 } cf01_file_data;
 
-
+/* reference to file or portion of a file */
 typedef struct cf01_file_sub_section
 {
     cf01_managed_object_data m_object_data; /* must be first */
