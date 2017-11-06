@@ -226,7 +226,7 @@ SetX(p, x)
 Development Cycle
 1. Make feature request/test/assertion.  Enable/disable assertion(s).
 2. Run test(s).  Use software.
-3. Notice error/outpoint.  Record error.  Log bug.
+3. Notice error or illogical situation.  Record error.  Log bug.
 4. Get more information.  Narrow area of investigation.  Go to step 1 or 5
 5. Make change.  If situation matches some pattern, implement pattern solution.  Go to step 1 or 2.
 
@@ -655,6 +655,18 @@ another file
   | (shape1 -- rectangular area of image_func_ab.jpg)
   | (relationship <unstated relation> shape1 var1)
   | 
+
+
+
+----------------------------
+
+Send & receive messages
+Document locations where messages are sent and received,
+or data is stored and retrieved.  This is implemented
+as a relation with links to send locations and links
+to retrieve locations.  Need not even be on the same
+device.
+
   
 
 -------------------------------------------------------------------------------
