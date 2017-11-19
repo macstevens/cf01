@@ -21,6 +21,60 @@ typedef unsigned long long uint64;
 typedef double float64;
 
 
+#define CF00_SINGLE_THREAD (1)
+
+#if (defined(CF00_SINGLE_THREAD))
+/* single-threaded */
+#define CF00_MAX_INV_CALL_DEPTH_ST (63)
+extern uint8 cf00_inv_call_depth_st;
+extern uint64 cf00_invariant_count_st[CF00_MAX_INV_CALL_DEPTH_ST];
+
+/* call at beginning of function */
+#define CF00_INCR_INV_CALL_DEPTH_ST() { cf00_inv_call_depth_st = \
+    (cf00_inv_call_depth_st < CF00_MAX_INV_CALL_DEPTH_ST) ? \
+    cf00_inv_call_depth_st + 1 : CF00_MAX_INV_CALL_DEPTH_ST; }
+
+/* call at end of function */
+#define CF00_DECR_INV_CALL_DEPTH_ST() { cf00_inv_call_depth_st = \
+    (cf00_inv_call_depth_st > 0) ? cf00_inv_call_depth_st - 1 : 0; }
+
+#define CF00_INCR_INVARIANT_COUNT_AT_CALL_DEPTH_ST()  \
+    ++(cf00_invariant_count_st[cf00_inv_call_depth_st])
+#define CF00_SHOULD_RUN_INVARIANT(_file_name, _line_num, _func_name, _cost) \
+    cf00_should_run_invariant_st(_file_name, _line_num, _func_name, _cost)
+#define CF00_REPORT_INVARIANT_FAILURE(_file_name, _line_num, _func_name, _is_data_ok_str) \
+    cf00_report_invariant_failure_st(_file_name, _line_num, _func_name, _is_data_ok_str)
+
+#else
+/* multi-threaded */
+#define CF00_INCR_INV_CALL_DEPTH_ST()
+#define CF00_DECR_INV_CALL_DEPTH_ST()
+#define CF00_INCR_INVARIANT_COUNT_AT_CALL_DEPTH_ST()
+#define CF00_SHOULD_RUN_INVARIANT(_file_name, _line_num, _func_name, _cost) \
+    cf00_should_run_invariant_mt(_file_name, _line_num, _func_name, _cost)
+#define CF00_REPORT_INVARIANT_FAILURE(_file_name, _line_num, _func_name, _is_data_ok_str) \
+    cf00_report_invariant_failure_mt(_file_name, _line_num, _func_name, _is_data_ok_str)
+#endif /* CF00_SINGLE_THREAD */
+
+/* Place CF00_INVARIANT(_is_data_ok, _cost) wherever an invariant function
+  would go.
+_is_data_ok - boolean value or function.  TRUE=> data is ok, FALSE=>some error
+_cost - uint32 value or function.  0=> very cheap or very important to run invariant
+  high value => expensive to run invariant
+*/
+#define CF00_INVARIANT( _is_data_ok, _cost )                               \
+    {                                                                      \
+    CF00_INCR_INV_COUNT_AT_CALL_DEPTH_ST()                                 \
+    if (CF00_SHOULD_RUN_INVARIANT(__FILE__, __LINE__, __FUNCTION__,_cost)) \
+        {                                                                  \
+        boolean result = _is_data_ok;                                      \
+        if (!result)                                                       \
+            {                                                              \
+            CF00_REPORT_INVARIANT_FAILURE(                                 \
+                __FILE__, __LINE__, __FUNCTION__, ##is_data_ok)            \
+            }                                                              \
+        }                                                                  \
+    }
 
 typedef enum
 {
@@ -410,10 +464,10 @@ typedef struct cf00_xyzabc_allocator
 } cf00_xyzabc_allocator;
 
 #if 0
-static void cf00_sa_allocate_block(cf00_string_allocator *a);
-static xyz *cf00_allocate_xyz_buf(cf00_string_allocator *a, 
+static void cf00_xyzabc_allocate_block(cf00_xyzabc_allocator *a);
+static xyz *cf00_allocate_xyz_buf(cf00_xyzabc_allocator *a, 
     const uint32 capacity);
-static void cf00_free_xyz_buf(cf00_string_allocator *a, xyz *buf, 
+static void cf00_free_xyz_buf(cf00_xyzabc_allocator *a, xyz *buf, 
     const uint32 capacity);
 #endif
 
