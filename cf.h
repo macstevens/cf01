@@ -76,6 +76,97 @@ _cost - uint32 value or function.  0=> very cheap or very important to run invar
         }                                                                  \
     }
 
+
+struct cf00_inv_crit_a_call_idx_range;
+struct cf00_inv_crit_a_call_idx_range_allocator;
+struct cf00_inv_crit_a_depth_range;
+struct cf00_inv_crit_a_depth_range_allocator;
+struct cf00_run_invariant_criteria_a;
+
+typedef struct cf00_inv_crit_a_call_idx_range
+              *cf00_inv_crit_a_call_idx_range_ptr;
+typedef struct cf00_inv_crit_a_call_idx_range_allocator
+              *cf00_inv_crit_a_call_idx_range_allocator_ptr;
+typedef struct cf00_inv_crit_a_depth_range
+              *cf00_inv_crit_a_depth_range_ptr;
+typedef struct cf00_inv_crit_a_depth_range_allocator
+              *cf00_inv_crit_a_depth_range_allocator_ptr;
+typedef struct cf00_run_invariant_criteria_a
+              *cf00_run_invariant_criteria_a_ptr;
+
+/* at a given call index range and given depth range, criteria:
+run invariant when (call_idx % div) == mod */
+typedef struct cf00_inv_crit_a_call_idx_range
+{
+    cf00_inv_crit_a_call_idx_range_allocator_ptr    m_allocator;
+    cf00_inv_crit_a_depth_range_ptr                 m_depth_range; /* owner */
+    cf00_inv_crit_a_call_idx_range_ptr              m_prev;
+    cf00_inv_crit_a_call_idx_range_ptr              m_next;
+    uint64                                          m_call_idx_range_end; /* (range max value) + 1 */
+    uint64                                          m_call_idx_div; /* divisor */
+    uint64                                          m_call_idx_mod; /* remainder */
+} cf00_inv_crit_a_call_idx_range;
+
+typedef struct cf00_inv_crit_a_call_idx_range_allocator
+{
+    struct cf00_inv_crit_a_call_idx_range   m_block[128];
+    cf00_inv_crit_a_call_idx_range_ptr      m_free_chain;
+} cf00_inv_crit_a_call_idx_range_allocator;
+
+/* range of depths and criteria for running invariant for that depth range */
+typedef struct cf00_inv_crit_a_depth_range
+{
+    cf00_inv_crit_a_depth_range_allocator_ptr   m_allocator;
+    cf00_run_invariant_criteria_a_ptr           m_inv_crit_a; /* owner */
+    cf00_inv_crit_a_depth_range_ptr             m_prev;
+    cf00_inv_crit_a_depth_range_ptr             m_next;
+    cf00_inv_crit_a_call_idx_range_ptr          m_call_idx_range_head;
+    cf00_inv_crit_a_call_idx_range_ptr          m_call_idx_range_tail;
+    uint64                                      m_depth_range_end; /* (depth range max value) + 1 */
+} cf00_inv_crit_a_depth_range;
+
+typedef struct cf00_inv_crit_a_depth_range_allocator
+{
+    struct cf00_inv_crit_a_depth_range  m_block[32];
+    cf00_inv_crit_a_depth_range_ptr     m_free_chain;
+} cf00_inv_crit_a_depth_range_allocator;
+
+/*
+m_depth_range_array
++---+---+---+ - +---+---+
+| 0 | 1 | 2 |...| 63| 64|
++---+---+---+ - +---+---+   +-------------+
+  |   |   |       |   +---->| depth range |
+  |   |   |       +-------->+-------------+
+  |   |   +-------------------------->+-------------+
+  |   +---------->+-------------+     | depth range |
+  +-------------->| depth range |     +-------------+
+                  +-------------+
+*/
+typedef struct cf00_run_invariant_criteria_a
+{
+    cf00_inv_crit_a_call_idx_range_allocator m_call_idx_range_alloc;
+    cf00_inv_crit_a_depth_range_allocator m_depth_range_alloc;
+    cf00_inv_crit_a_depth_range_ptr m_depth_range_array[CF00_MAX_INV_CALL_DEPTH_ST];
+} cf00_run_invariant_criteria_a;
+
+
+typedef struct cf00_run_invariant_depth_result_a
+{
+    uint64 m_total_inv_count;
+    uint64 m_inv_run_count;
+    uint64 m_inv_fail_count;
+    uint64  m_fail_call_idx_array[16]; /* call idx for each of first 16 invariant failures */  
+} cf00_run_invariant_depth_result_a;
+
+
+typedef struct cf00_run_invariant_result_a
+{
+    cf00_run_invariant_depth_result_a   m_depth_result_array[CF00_MAX_INV_CALL_DEPTH_ST];
+} cf00_run_invariant_result_a;
+
+
+
 typedef enum
 {
     CF00_OT_OBJECT = 0,
