@@ -107,11 +107,27 @@ typedef struct cf00_inv_crit_a_call_idx_range
     uint64                                          m_call_idx_mod; /* remainder */
 } cf00_inv_crit_a_call_idx_range;
 
+#define CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE (128)
 typedef struct cf00_inv_crit_a_call_idx_range_allocator
 {
-    struct cf00_inv_crit_a_call_idx_range   m_block[128];
+    struct cf00_inv_crit_a_call_idx_range   m_block[CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE];
     cf00_inv_crit_a_call_idx_range_ptr      m_free_chain;
 } cf00_inv_crit_a_call_idx_range_allocator;
+
+
+void cf00_inv_crit_a_call_idx_range_alloc_init(
+    cf00_inv_crit_a_call_idx_range_allocator_ptr a);
+void cf00_inv_crit_a_call_idx_range_alloc_clear(
+    cf00_inv_crit_a_call_idx_range_allocator_ptr a);
+cf00_inv_crit_a_call_idx_range_ptr cf00_allocate_inv_crit_a_call_idx_range(
+    cf00_inv_crit_a_call_idx_range_allocator_ptr a);
+void cf00_free_inv_crit_a_call_idx_range(cf00_inv_crit_a_call_idx_range_ptr r);
+void cf00_inv_crit_a_call_idx_range_alloc_debug_dump(
+    cf00_inv_crit_a_call_idx_range_allocator_ptr a);
+uint64 cf00_inv_crit_a_call_idx_range_alloc_verify_data(
+    const cf00_inv_crit_a_call_idx_range_allocator *a, char *err_msg,
+    const size_t max_err_msg_len);
+
 
 /* range of depths and criteria for running invariant for that depth range */
 typedef struct cf00_inv_crit_a_depth_range
@@ -130,6 +146,20 @@ typedef struct cf00_inv_crit_a_depth_range_allocator
     struct cf00_inv_crit_a_depth_range  m_block[32];
     cf00_inv_crit_a_depth_range_ptr     m_free_chain;
 } cf00_inv_crit_a_depth_range_allocator;
+
+
+void cf00_inv_crit_a_depth_range_alloc_init(
+    cf00_inv_crit_a_depth_range_allocator_ptr a);
+void cf00_inv_crit_a_depth_range_alloc_clear(
+    cf00_inv_crit_a_depth_range_allocator_ptr a);
+cf00_inv_crit_a_depth_range_ptr cf00_allocate_inv_crit_a_depth_range(
+    cf00_inv_crit_a_depth_range_allocator_ptr a);
+void cf00_free_inv_crit_a_depth_range(cf00_inv_crit_a_depth_range_ptr r);
+void cf00_inv_crit_a_depth_range_debug_dump(
+    cf00_inv_crit_a_depth_range_allocator_ptr a);
+uint64 cf00_inv_crit_a_depth_range_verify_data(
+    const cf00_inv_crit_a_depth_range_allocator *a, char *err_msg,
+    const size_t max_err_msg_len);
 
 /*
 m_depth_range_array
@@ -151,15 +181,23 @@ typedef struct cf00_run_invariant_criteria_a
 } cf00_run_invariant_criteria_a;
 
 
+void cf00_run_inv_crit_a_init(cf00_run_invariant_criteria_a_ptr c);
+void cf00_run_inv_crit_a_clear(cf00_run_invariant_criteria_a_ptr c);
+void cf00_run_inv_crit_a_debug_dump(const cf00_run_invariant_criteria_a *c);
+uint64 cf00_run_inv_crit_a_verify_data(const cf00_run_invariant_criteria_a *c, char *err_msg,
+    const size_t max_err_msg_len);
+
+
+/* result for a particular depth */
 typedef struct cf00_run_invariant_depth_result_a
 {
-    uint64 m_total_inv_count;
-    uint64 m_inv_run_count;
-    uint64 m_inv_fail_count;
+    uint64 m_total_inv_count; /* number of invariants that were run + number of invariants that were skipped */
+    uint64 m_inv_run_count;   /* number of invariants that were run */
+    uint64 m_inv_fail_count;  /* number of invariants that were run and failed */
     uint64  m_fail_call_idx_array[16]; /* call idx for each of first 16 invariant failures */  
 } cf00_run_invariant_depth_result_a;
 
-
+/* results for all depths */
 typedef struct cf00_run_invariant_result_a
 {
     cf00_run_invariant_depth_result_a   m_depth_result_array[CF00_MAX_INV_CALL_DEPTH_ST];
