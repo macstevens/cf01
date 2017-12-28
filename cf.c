@@ -295,74 +295,63 @@ uint64 cf00_inv_crit_a_call_idx_range_verify_data(
     const cf00_inv_crit_a_call_idx_range_allocator *a, char *err_msg,
     const size_t max_err_msg_len)
 {
-#if 0
     uint64 error_count = 0;
 
-    if (NULL != a)
-    {
+    if (NULL != a) {
         size_t i;
-        cf00_inv_crit_a_call_idx_range_ptr r;
+        size_t null_r_count = 0;
+        cf00_inv_crit_a_call_idx_range const *r;
 
-        /* for each item in a->m_block[], check that it points back to a */
-        
-    /*cf00_inv_crit_a_call_idx_range_ptr r = &((a->m_block)[0]);;
-    cf00_inv_crit_a_call_idx_range_ptr r_next;
-    memset( a, sizeof(cf00_inv_crit_a_call_idx_range_allocator), 0 );
-    a->m_free_chain = r;
-    for(i = 1; i < CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE; ++i)
-    {
-        r_next = &((a->m_block)[i]);
-        r->m_allocator = a;
-        r->m_next = r_next;
-        r = r_next;
-    }*/
-
-
-
-        /* for each item in free chain, compare address to make sure it is in a->m_block[] */
-        for (i = 0; i < sv->m_capacity; ++i) {
-            cf00_string *s = (sv->m_str_array)[i];
-
-            if (i < sv->m_size) {
-                if (NULL != s) {
-                    error_count += cf00_str_verify_data(s, err_msg,
-                        max_err_msg_len);            
-                    if (s->m_allocator != sv->m_allocator) {
+        for(i = 0; i < CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE; ++i) {
+            r = &((a->m_block)[i]);
+            if(NULL == r) {
+                ++null_r_count;
+                }
+            else {
+                if( r->m_allocator != a ) {
+                    ++error_count;
+                    if(NULL != err_msg) {
                         cf00_msg_append_f(err_msg, max_err_msg_len, 
-                            "m_allocator mismatch");
-                        ++error_count;
+                            "m_allocator mismatch  i=%i", i);
                     }
                 }
             }
-            else {
-                if (NULL != s) {
-                    cf00_msg_append_f(err_msg, max_err_msg_len, 
-                        "non-NULL string past array end i=%i", (int)i);
-                }
+        if((null_r_count != 0) &&
+            (null_r_count != CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE)) {
+            ++error_count;
+            if(NULL != err_msg) {
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "null_r_count = %i", null_r_count);
             }
         }
 
-        /*    compare capacity, size */
-
-        if (sv->m_size > sv->m_capacity) {
-            ++error_count;
-            cf00_msg_append_f(err_msg, max_err_msg_len, 
-               "str_vec m_size(%i) > m_capacity(%i)",(int)(sv->m_size),
-               (int)(sv->m_capacity));
+        i = 0;
+        r = a->m_free_chain;
+        while((r != NULL) &&
+            (i < CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE)) {
+            if((r < &((a->m_block)[i]))||
+                (r >= &((a->m_block)[CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE]))) {
+                ++error_count;
+                if(NULL != err_msg) {
+                    cf00_msg_append_f(err_msg, max_err_msg_len, 
+                        "free chain r addr out of bounds i=%i", i);
+                    }
+                }       
+            if( r->m_allocator != a ) {
+                ++error_count;
+                if(NULL != err_msg) {
+                    cf00_msg_append_f(err_msg, max_err_msg_len, 
+                        "m_allocator mismatch  fc i=%i", i);
+                    }            
+                }
+            r = r->m_next;
+            ++i;
+            /* check for infinite loop */
+            }            
         }
-
-        if (0 == sv->m_capacity && NULL != sv->m_str_array) {
-            ++error_count;
-            cf00_msg_append_f(err_msg, max_err_msg_len, 
-                "m_capacity = %i, but m_str_array non-NULL",
-                (int)(sv->m_str_array));
-        }
-
     }
 
     return error_count;
-#endif
-return 0;
 }
 
 
