@@ -9,7 +9,24 @@
 #include <string.h>
 #include "cf.h"
 
+#if(!defined(FALSE))
+    #define FALSE (1)
+#endif
+#if(!defined(TRUE))
+    #define TRUE (1)
+#endif
+
 /* STATIC FUNCTIONS */
+
+static int compare_uint64(const uint64 x, const uint64 y){
+    int result = 0;
+    if(x < y){
+        result = -1;
+    } else if(y < x){
+        result = 1;
+    }
+    return result;
+}
 
 /* append formatted string   
 prerequisite:  msg[0] = 0, or msg is null-terminated string
@@ -81,7 +98,7 @@ static char *cf00_allocate_char_buf(cf00_string_allocator *a,
                 while (m < m_end) {
                     *((char **)m) = *free_chain;
                     *free_chain = m;
-                    m += capacity;
+                   m += capacity;
                 }
             }
             /* remove from free chain */
@@ -207,8 +224,169 @@ static void cf00_free_string_ptr_array(cf00_string_allocator *a,
 
 /* cf00_inv_crit_a_call_idx_range */
 
+/* initialize raw memory */
+extern void cf00_inv_crit_a_call_idx_range_init(cf00_inv_crit_a_call_idx_range *r)
+{
+    assert(NULL != r);
+    memset(r, 0, sizeof(cf00_inv_crit_a_call_idx_range));
+}
 
-void cf00_inv_crit_a_call_idx_range_alloc_init(
+/* 
+clear cf00_inv_crit_a_call_idx_range
+also, prepare for freeing raw memory of struct
+cf00_inv_crit_a_call_idx_rang itself */
+extern void cf00_inv_crit_a_call_idx_range_clear(
+    cf00_inv_crit_a_call_idx_range *r)
+{
+    if (NULL != r)
+    {
+        /* disconnect m_prev and m_next? */
+        memset(r, 0, sizeof(cf00_inv_crit_a_call_idx_range));
+    }
+}
+
+extern int cf00_inv_crit_a_call_idx_range_compare(
+    const cf00_inv_crit_a_call_idx_range *x,
+    const cf00_inv_crit_a_call_idx_range *y)
+{
+    int result = 0;
+
+    if(NULL == x){
+        if(NULL == y){
+            result = 0;
+        } else {
+            result = -1;
+        }
+    } else if(NULL == y) {
+        result = 1;
+    } else {
+        result = compare_uint64(x->m_call_idx_range_end,
+            y->m_call_idx_range_end);
+        if(0 == result){
+            result = compare_uint64(x->m_call_idx_div, y->m_call_idx_div);
+        }
+        if(0 == result){
+            result = compare_uint64(x->m_call_idx_mod, y->m_call_idx_mod);
+        }
+        if(0 == result){
+            if(NULL == x->m_prev){
+                if(NULL == y->m_prev){
+                    result = 0;
+                } else {
+                    result = 1;
+                }
+            } else if(NULL == y->m_prev) {
+                result = -1;
+            } else {
+                result = compare_uint64(x->m_prev->m_call_idx_range_end,
+                    y->m_prev->m_call_idx_range_end);
+            }
+        }
+    } 
+
+    return result;
+}
+
+extern uint64 cf00_inv_crit_a_call_idx_range_verify_data(
+    const cf00_inv_crit_a_call_idx_range *r, char *err_msg,
+    const size_t max_err_msg_len)
+{
+    uint64 error_count = 0;
+
+    if (NULL != r) {
+        if (NULL != r->m_allocator) {
+            /* verify r was allocated by m_allocator */
+        }
+
+        if (NULL == r->m_prev)
+        {
+            if(NULL != r->m_depth_range){
+                if (r->m_depth_range->m_call_idx_range_head != r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL == r->m_prev && "
+                        "r->m_depth_range->m_call_idx_range_head != r");
+                }
+            }
+        } else {
+            if(NULL != r->m_depth_range){
+                if (r->m_depth_range->m_call_idx_range_head == r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL != r->m_prev && "
+                        "r->m_depth_range->m_call_idx_range_head == r");
+                }
+            }
+
+            if(r->m_depth_range != r->m_prev->m_depth_range){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "r->m_depth_range != r->m_prev->m_depth_range");                
+            }
+       
+            if(r->m_call_idx_range_end <= r->m_prev->m_call_idx_range_end){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "r->m_call_idx_range_end <= r->m_prev->m_call_idx_range_end");                
+            }
+        }
+
+        if (NULL == r->m_next)
+        {
+            if(NULL != r->m_depth_range){
+                if (r->m_depth_range->m_call_idx_range_tail != r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL == r->m_next && "
+                        "r->m_depth_range->m_call_idx_range_tail != r");
+                }
+            }
+        } else {
+            if(NULL != r->m_depth_range){
+                if (r->m_depth_range->m_call_idx_range_tail == r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL != r->m_next && "
+                        "r->m_depth_range->m_call_idx_range_tail == r");
+                }
+            }
+
+            if(r->m_depth_range != r->m_next->m_depth_range){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "r->m_depth_range != r->m_next->m_depth_range");                
+            }
+       
+            if(r->m_call_idx_range_end >= r->m_next->m_call_idx_range_end){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "r->m_call_idx_range_end >= r->m_next->m_call_idx_range_end");                
+            }
+        }
+
+        if(NULL != r->m_depth_range){
+            if(r->m_call_idx_range_end <= 0){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "r->m_call_idx_range_end <= 0");                
+            }
+
+            if(r->m_call_idx_div <= r->m_call_idx_mod){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "r->m_call_idx_div=%u <= r->m_call_idx_mod=%u",
+                    r->m_call_idx_div, r->m_call_idx_mod);                
+            }
+        }
+    }
+
+    return error_count;
+}
+
+
+/* cf00_inv_crit_a_call_idx_range_allocator */
+
+extern void cf00_inv_crit_a_call_idx_range_alloc_init(
     cf00_inv_crit_a_call_idx_range_allocator_ptr a)
 {
     size_t i;
@@ -219,6 +397,7 @@ void cf00_inv_crit_a_call_idx_range_alloc_init(
     for(i = 1; i < CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE; ++i)
     {
         r_next = &((a->m_block)[i]);
+        cf00_inv_crit_a_call_idx_range_init(r);
         r->m_allocator = a;
         r->m_next = r_next;
         r = r_next;
@@ -226,16 +405,15 @@ void cf00_inv_crit_a_call_idx_range_alloc_init(
     r->m_allocator = a;
 }
 
-/* prepare for freeing raw memory of struct cf00_inv_crit_a_call_idx_range_allocator itself
-*/
-void cf00_inv_crit_a_call_idx_range_alloc_clear(
+/* prepare for freeing raw memory of struct
+cf00_inv_crit_a_call_idx_range_allocator itself */
+extern void cf00_inv_crit_a_call_idx_range_alloc_clear(
     cf00_inv_crit_a_call_idx_range_allocator_ptr a)
 {
     memset( a, sizeof(cf00_inv_crit_a_call_idx_range_allocator), 0 );
 }
 
-
-cf00_inv_crit_a_call_idx_range_ptr cf00_allocate_inv_crit_a_call_idx_range(
+extern cf00_inv_crit_a_call_idx_range_ptr cf00_allocate_inv_crit_a_call_idx_range(
     cf00_inv_crit_a_call_idx_range_allocator_ptr a)
 {
     cf00_inv_crit_a_call_idx_range_ptr r = a->m_free_chain;
@@ -243,7 +421,7 @@ cf00_inv_crit_a_call_idx_range_ptr cf00_allocate_inv_crit_a_call_idx_range(
     {
         r = (cf00_inv_crit_a_call_idx_range_ptr)
             malloc(sizeof(cf00_inv_crit_a_call_idx_range));
-        memset(r, 0, sizeof(cf00_inv_crit_a_call_idx_range)); 
+        cf00_inv_crit_a_call_idx_range_init(r);
     }
     else
     {
@@ -252,7 +430,7 @@ cf00_inv_crit_a_call_idx_range_ptr cf00_allocate_inv_crit_a_call_idx_range(
     }    
 }
 
-void cf00_free_inv_crit_a_call_idx_range(cf00_inv_crit_a_call_idx_range_ptr r)
+extern void cf00_free_inv_crit_a_call_idx_range(cf00_inv_crit_a_call_idx_range_ptr r)
 {
     if(r != NULL)
     {
@@ -270,8 +448,7 @@ void cf00_free_inv_crit_a_call_idx_range(cf00_inv_crit_a_call_idx_range_ptr r)
     }
 }
 
-
-void cf00_inv_crit_a_call_idx_range_alloc_debug_dump(
+extern void cf00_inv_crit_a_call_idx_range_alloc_debug_dump(
     cf00_inv_crit_a_call_idx_range_allocator_ptr a)
 {
     if (NULL == a) {
@@ -290,8 +467,7 @@ void cf00_inv_crit_a_call_idx_range_alloc_debug_dump(
     }
 }
 
-
-uint64 cf00_inv_crit_a_call_idx_range_verify_data(
+extern uint64 cf00_inv_crit_a_call_idx_range_alloc_verify_data(
     const cf00_inv_crit_a_call_idx_range_allocator *a, char *err_msg,
     const size_t max_err_msg_len)
 {
@@ -346,8 +522,233 @@ uint64 cf00_inv_crit_a_call_idx_range_verify_data(
                 }
             r = r->m_next;
             ++i;
-            /* check for infinite loop */
-            }            
+            }
+
+        if((r != NULL) &&
+            (i >= CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE)) {
+            ++error_count;
+            if(NULL != err_msg) {
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "free chain too large");
+                }            
+            }
+        }
+    }
+
+    return error_count;
+}
+
+
+/* cf00_inv_crit_a_depth_range */
+
+/* initialize raw memory */
+extern void cf00_inv_crit_a_depth_range_init(cf00_inv_crit_a_depth_range *r)
+{
+    assert(NULL != r);
+    memset(r, 0, sizeof(cf00_inv_crit_a_call_idx_range));
+}
+
+/* clear cf00_inv_crit_a_depth_range
+also, prepare for freeing raw memory of struct
+cf00_inv_crit_a_depth_range itself */
+extern void cf00_inv_crit_a_depth_range_clear(cf00_inv_crit_a_depth_range *r)
+{
+    if (NULL != r)
+    {
+        /* disconnect m_prev and m_next? */
+        memset(r, 0, sizeof(cf00_inv_crit_a_depth_range));
+    }
+}
+
+extern int cf00_inv_crit_a_depth_range_compare(
+    const cf00_inv_crit_a_depth_range *x,
+    const cf00_inv_crit_a_depth_range *y)
+{
+    int result = 0;
+
+    if(NULL == x){
+        if(NULL == y){
+            result = 0;
+        } else {
+            result = -1;
+        }
+    } else if(NULL == y) {
+        result = 1;
+    } else {
+        result = compare_uint64(x->m_depth_range_end,
+            y->m_depth_range_end);
+        if(0 == result){
+            if(NULL == x->m_prev){
+                if(NULL == y->m_prev){
+                    result = 0;
+                } else {
+                    result = 1;
+                }
+            } else if(NULL == y->m_prev) {
+                result = -1;
+            } else {
+                result = compare_uint64(x->m_prev->m_depth_range_end,
+                    y->m_prev->m_depth_range_end);
+            }
+        }
+        if(0 == result){
+            uint8 done = FALSE;
+            cf00_inv_crit_a_call_idx_range_ptr xp = x->m_call_idx_range_head;
+            cf00_inv_crit_a_call_idx_range_ptr yp = y->m_call_idx_range_head;
+            while(!done){
+                if(NULL == xp){
+                    if(NULL == yp){
+                        result = 0;
+                    } else {
+                        result = -1;
+                    }
+                    done = TRUE;
+                } else if(NULL == yp){
+                    result = 1;
+                    done = TRUE;
+                } else {
+                    result = cf00_inv_crit_a_call_idx_range_compare(xp, yp);
+                    if(0 == result){
+                        xp = xp->m_next;
+                        yp = yp->m_next;
+                    } else {
+                        done = TRUE;
+                    }
+                }                
+            }
+        }
+    } 
+
+    return result;
+}
+
+extern uint64 cf00_inv_crit_a_depth_range_verify_data(
+    const cf00_inv_crit_a_depth_range *r, char *err_msg,
+    const size_t max_err_msg_len)
+{
+    uint64 error_count = 0;
+    cf00_inv_crit_a_depth_range_ptr depth_range_head = NULL;
+    cf00_inv_crit_a_depth_range_ptr depth_range_tail = NULL;
+    cf00_inv_crit_a_call_idx_range_ptr p = NULL;
+
+
+    if (NULL != r) {
+        if(NULL != r->m_inv_crit_a){
+            depth_range_head = r->m_inv_crit_a->m_depth_range_array[0];
+            depth_range_tail = r->m_inv_crit_a->m_depth_range_array[
+                CF00_MAX_INV_CALL_DEPTH_ST - 1];
+        }
+
+        if (NULL != r->m_allocator) {
+            /* verify r was allocated by m_allocator */
+        }
+
+        if (NULL == r->m_prev)
+        {
+            if(NULL != r->m_inv_crit_a){
+                if (depth_range_head != r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL == r->m_prev && depth_range_head != r");
+                }
+            }
+        } else {
+            if(NULL != r->m_inv_crit_a){
+                if (depth_range_head == r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL != r->m_prev && depth_range_head == r");
+                }
+            }
+
+            if(r->m_inv_crit_a != r->m_prev->m_inv_crit_a){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "r->m_inv_crit_a != r->m_prev->m_inv_crit_a");                
+            }
+       
+            if(r->m_depth_range_end <= r->m_prev->m_depth_range_end){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "r->m_depth_range_end <= r->m_prev->m_depth_range_end");                
+            }
+        }
+
+        if (NULL == r->m_next)
+        {
+            if(NULL != r->m_inv_crit_a){
+                if (depth_range_tail != r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL == r->m_next && depth_range_tail != r");
+                }
+            }
+        } else {
+            if(NULL != r->m_inv_crit_a){
+                if (depth_range_tail == r) {
+                    ++error_count;
+                    cf00_msg_append_f(err_msg, max_err_msg_len,
+                        "NULL != r->m_next && depth_range_tail == r");
+                }
+            }
+
+            if(r->m_inv_crit_a != r->m_next->m_inv_crit_a){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                    "r->m_inv_crit_a != r->m_next->m_inv_crit_a");                
+            }
+       
+            if(r->m_depth_range_end >= r->m_next->m_depth_range_end){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "r->m_depth_range_end >= r->m_next->m_depth_range_end");                
+            }
+        }
+
+        if(NULL != r->m_inv_crit_a){
+            if(r->m_depth_range_end <= 0){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "r->m_depth_range_end <= 0");                
+            }
+        }
+
+        p = r->m_call_idx_range_head;
+        while(NULL != p){
+            error_count += cf00_inv_crit_a_call_idx_range_verify_data(p,
+                err_msg, max_err_msg_len);
+
+            if(p->m_depth_range != r){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "p->m_depth_range != r");
+            }
+
+            if((p == r->m_call_idx_range_head) && (NULL != p->m_prev)){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "pp == r->m_call_idx_range_head && NULL != p->m_prev");
+            }
+
+            if((p != r->m_call_idx_range_head) && (NULL == p->m_prev)){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "p != r->m_call_idx_range_head && NULL == p->m_prev");
+            }
+
+            if((p == r->m_call_idx_range_tail) && (NULL != p->m_next)){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "p == r->m_call_idx_range_tail && NULL != p->m_next");
+            }
+
+            if((p != r->m_call_idx_range_tail) && (NULL == p->m_next)){
+                ++error_count;
+                cf00_msg_append_f(err_msg, max_err_msg_len, 
+                  "p != r->m_call_idx_range_tail && NULL == p->m_next");
+            }
+
+            p = p->m_next;
         }
     }
 
@@ -356,9 +757,7 @@ uint64 cf00_inv_crit_a_call_idx_range_verify_data(
 
 
 
-
-
-/* cf00_inv_crit_a_depth_range */
+/* cf00_inv_crit_a_depth_range_allocator */
 
 void cf00_inv_crit_a_depth_range_alloc_init(
     cf00_inv_crit_a_depth_range_allocator_ptr a);
@@ -369,7 +768,7 @@ cf00_inv_crit_a_depth_range_ptr cf00_allocate_inv_crit_a_depth_range(
 void cf00_free_inv_crit_a_depth_range(cf00_inv_crit_a_depth_range_ptr r);
 void cf00_inv_crit_a_depth_range_debug_dump(
     cf00_inv_crit_a_depth_range_allocator_ptr a);
-uint64 cf00_inv_crit_a_depth_range_verify_data(
+uint64 cf00_inv_crit_a_depth_range_alloc_verify_data(
     const cf00_inv_crit_a_depth_range_allocator *a, char *err_msg,
     const size_t max_err_msg_len);
 

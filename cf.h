@@ -107,6 +107,16 @@ typedef struct cf00_inv_crit_a_call_idx_range
     uint64                                          m_call_idx_mod; /* remainder */
 } cf00_inv_crit_a_call_idx_range;
 
+
+void cf00_inv_crit_a_call_idx_range_init(cf00_inv_crit_a_call_idx_range *r);
+void cf00_inv_crit_a_call_idx_range_clear(cf00_inv_crit_a_call_idx_range *r);
+int cf00_inv_crit_a_call_idx_range_compare(
+    const cf00_inv_crit_a_call_idx_range *x,
+    const cf00_inv_crit_a_call_idx_range *y);
+uint64 cf00_inv_crit_a_call_idx_range_verify_data(
+    const cf00_inv_crit_a_call_idx_range *r, char *err_msg,
+    const size_t max_err_msg_len);
+
 #define CF00_INV_CRIT_A_CALL_IDX_RANGE_ALLOC_BLOCK_SIZE (128)
 typedef struct cf00_inv_crit_a_call_idx_range_allocator
 {
@@ -141,6 +151,15 @@ typedef struct cf00_inv_crit_a_depth_range
     uint64                                      m_depth_range_end; /* (depth range max value) + 1 */
 } cf00_inv_crit_a_depth_range;
 
+void cf00_inv_crit_a_depth_range_init(cf00_inv_crit_a_depth_range *r);
+void cf00_inv_crit_a_depth_range_clear(cf00_inv_crit_a_depth_range *r);
+int cf00_inv_crit_a_depth_range_compare(
+    const cf00_inv_crit_a_depth_range *x,
+    const cf00_inv_crit_a_depth_range *y);
+uint64 cf00_inv_crit_a_depth_range_verify_data(
+    const cf00_inv_crit_a_depth_range *r, char *err_msg,
+    const size_t max_err_msg_len);
+
 typedef struct cf00_inv_crit_a_depth_range_allocator
 {
     struct cf00_inv_crit_a_depth_range  m_block[32];
@@ -157,7 +176,7 @@ cf00_inv_crit_a_depth_range_ptr cf00_allocate_inv_crit_a_depth_range(
 void cf00_free_inv_crit_a_depth_range(cf00_inv_crit_a_depth_range_ptr r);
 void cf00_inv_crit_a_depth_range_debug_dump(
     cf00_inv_crit_a_depth_range_allocator_ptr a);
-uint64 cf00_inv_crit_a_depth_range_verify_data(
+uint64 cf00_inv_crit_a_depth_range_alloc_verify_data(
     const cf00_inv_crit_a_depth_range_allocator *a, char *err_msg,
     const size_t max_err_msg_len);
 
