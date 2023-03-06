@@ -5,3 +5,7 @@ obj/*
 main_exe
 
 *.a
+*.vpwhist
+*.vtg
+cf01_jrnl.txt
+*.exe
