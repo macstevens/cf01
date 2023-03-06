@@ -1,5 +1,20 @@
 cf01 -- C-Flat Library Version 01
 
+
+LICENSE
+
+Copyright (c) 2023 Mac Stevens <stevensm@earthlink.net> <www.macstevens.net>
+
+Permission to use, copy, modify, and distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+Reference: https://opensource.org/licenses/ISC
+
+
+
+DESCRIPTION
+
 C-Flat is a project encompassing various programming tools, most of
 which remain undeveloped as of March 2023.  cf00 is the version of 
 C-flat implemented in C.  It is barely started.  For more information,
@@ -7,6 +22,10 @@ see commit e42fae1756c3e54786300e86e4895809bc39e62c.
 
 cf01 is the version implemented in C++.  In 2021, the first tool of
 practical use was implemented: Auto-Assert.
+
+
+
+AUTO ASSERT
 
 Auto-Assert attempts to automate much of the following debugging cycle.
  1. Bug is detected.  Program crashes or produces wrong output, etc.
