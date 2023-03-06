@@ -624,7 +624,7 @@ cf01_uint8 idx_crit_idx;
 
 /* update m_curr_p_count[] */
 p_cnt = m_curr_p_count[m_call_depth];
-if( p_cnt < 0xFFFFFFFFFFFFFFFF )
+if( p_cnt < std::numeric_limits<cf01_uint64>::max() )
     {
     ++p_cnt;
     }
@@ -744,6 +744,9 @@ if(NULL != aasrt_result){
     (aasrt_result->m_err_msg)+="\n";
     (aasrt_result->m_err_msg).insert( (aasrt_result->m_err_msg).end(),
         &(m_utility_err_buf[0]), &(m_utility_err_buf[m_utility_err_buf_pos]));
+
+    /* clear utility buffer */
+    clear_utility_err_buf(); \
     }
 
 if((NULL != aasrt_result) && should_save_to_file){

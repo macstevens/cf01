@@ -20,14 +20,14 @@ endif
 ifeq "$(CFG)" "Debug"
 OUTDIR=Debug
 OUTFILE=$(OUTDIR)/cf01.a
-CFG_INC=
-CFG_LIB=$(OUTDIR)/cf01.a 
+CFG_INC=-I.. 
+CFG_LIB=
 CFG_OBJ=
 COMMON_OBJ=$(OUTDIR)/cf01.o 
 OBJ=$(COMMON_OBJ) $(CFG_OBJ)
 ALL_OBJ=$(OUTDIR)/cf01.o $(OUTDIR)/cf01.a 
 
-COMPILE=g++ -c -ggdb  -g -o "$(OUTDIR)/$(*F).o" $(CFG_INC) "$<"
+COMPILE=g++ -c -ggdb -g -o "$(OUTDIR)/$(*F).o" $(CFG_INC) "$<"
 LINK=ar -rs  "$(OUTFILE)" $(OBJ)
 
 # Pattern rules
@@ -61,14 +61,56 @@ endif
 ifeq "$(CFG)" "Release"
 OUTDIR=Release
 OUTFILE=$(OUTDIR)/cf01.a
-CFG_INC=
-CFG_LIB=$(OUTDIR)/cf01.a 
+CFG_INC=-I.. 
+CFG_LIB=
 CFG_OBJ=
 COMMON_OBJ=$(OUTDIR)/cf01.o 
 OBJ=$(COMMON_OBJ) $(CFG_OBJ)
 ALL_OBJ=$(OUTDIR)/cf01.o $(OUTDIR)/cf01.a 
 
 COMPILE=g++ -c -O2 -o "$(OUTDIR)/$(*F).o" $(CFG_INC) "$<"
+LINK=ar -rs  "$(OUTFILE)" $(OBJ)
+
+# Pattern rules
+$(OUTDIR)/%.o : ../%.cpp ../%.h
+	$(COMPILE)
+
+# Build rules
+all: $(OUTFILE)
+
+$(OUTFILE): $(OUTDIR)  $(OBJ)
+	$(LINK)
+
+$(OUTDIR):
+	$(MKDIR) -p "$(OUTDIR)"
+
+# Rebuild this project
+rebuild: cleanall all
+
+# Clean this project
+clean:
+	$(RM) -f $(OUTFILE)
+	$(RM) -f $(OBJ)
+
+# Clean this project and all dependencies
+cleanall: clean
+endif
+
+#
+# Configuration: Profile
+#
+# https://ftp.gnu.org/old-gnu/Manuals/gprof-2.9.1/html_chapter/gprof_toc.html
+ifeq "$(CFG)" "Profile"
+OUTDIR=Profile
+OUTFILE=$(OUTDIR)/cf01.a
+CFG_INC=-I.. 
+CFG_LIB=
+CFG_OBJ=
+COMMON_OBJ=$(OUTDIR)/cf01.o 
+OBJ=$(COMMON_OBJ) $(CFG_OBJ)
+ALL_OBJ=$(OUTDIR)/cf01.o $(OUTDIR)/cf01.a 
+
+COMPILE=g++ -c -O1 -pg -o "$(OUTDIR)/$(*F).o" $(CFG_INC) "$<"
 LINK=ar -rs  "$(OUTFILE)" $(OBJ)
 
 # Pattern rules

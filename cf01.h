@@ -37,10 +37,9 @@ _condition - boolean value or function.  TRUE=> data is ok, FALSE=>some error
 #define CF01_AUTO_ASSERT( _condition ) {                                   \
     cf01_auto_assert_wksp::get_instance()->incr_p_count();                 \
     if (cf01_auto_assert_wksp::get_instance()->should_run_aasrt()){        \
-        bool result = (_condition);                                          \
+        bool result = (_condition);                                        \
         cf01_auto_assert_wksp::get_instance()->report_aasrt_result(        \
             result, __FILE__, __LINE__, __FUNCTION__, #_condition );       \
-        cf01_auto_assert_wksp::get_instance()->clear_utility_err_buf();    \
         }                                                                  \
     }
 
@@ -51,10 +50,9 @@ _condition - boolean value or function.  TRUE=> data is ok, FALSE=>some error
 /* run extra debug assertion, if debug level meets criteria */
 #define CF01_AA_XDBG_ASSERT( _condition, _dbg_lvl ){                    \
     if(CF01_AA_SHOULD_RUN_XDBG(_dbg_lvl)){                              \
-        bool result = (_condition);                                       \
+        bool result = (_condition);                                     \
         cf01_auto_assert_wksp::get_instance()->report_aasrt_result(     \
             result, __FILE__, __LINE__, __FUNCTION__, #_condition);     \
-        cf01_auto_assert_wksp::get_instance()->clear_utility_err_buf(); \
         }                                                               \
     }
 
@@ -110,7 +108,7 @@ public:
 
 
 
-#define CF01_AASRT_CALL_DEPTH_COUNT (16)
+#define CF01_AASRT_CALL_DEPTH_COUNT (32)
 #define CF01_AASRT_CALL_IDX_RANGE_COUNT (16)
 
 /* auto-assert assertion result */
@@ -256,8 +254,8 @@ public:
 
     /* Increment call depth. call at beginning of function */
     void incr_call_depth() {
-        m_call_depth = (m_call_depth < CF01_AASRT_CALL_DEPTH_COUNT) ?
-    		m_call_depth + 1 : CF01_AASRT_CALL_DEPTH_COUNT;
+        m_call_depth = (m_call_depth < (CF01_AASRT_CALL_DEPTH_COUNT-1)) ?
+    		m_call_depth + 1 : (CF01_AASRT_CALL_DEPTH_COUNT-1);
         ++(m_curr_t_count[m_call_depth]); }
 
     /* Decrement call depth. call at end of function */
