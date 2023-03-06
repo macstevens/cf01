@@ -32,7 +32,7 @@ Auto-Assert attempts to automate much of the following debugging cycle.
  2. Add debug code & assertions.
  3. Re-run.
  4. Add debug code & assertions.
- 5. re-run
+ 5. Re-run
  ...
  6. Bug is found.
  7. Bug is fixed.
@@ -49,11 +49,11 @@ always, some are expensive and hence should be run rarely. The cf01 module
 does the bookkeeping, keeping track of which assertions are run and
 pass/fail status.  
 
-When an assertion fails, cf01 stores some assertion information in a file.
-Then, when the program is re-started, cf01 reads this file, enabling more
-assertions and debug code, targeted to occur just prior to the failing
-assertion.  Then the program is re-run, possibly triggering an earlier
-assertion.  This process continues until the bug is found.
+When an assertion fails, cf01 stores some assertion information in a file
+named cf01_jrnl.txt. When the program is re-started, cf01 reads this
+file and enables more assertions and debug code, targeted to occur just prior to
+the failing assertion.  Then the program is re-run, possibly triggering an
+earlier assertion.  This process continues until the bug is found.
 
 Ideally, the programmer's task becomes adding or modifying assertions and
 debug code.  And cf01 handles the enabling and disabling of this 
@@ -91,6 +91,51 @@ Assert:PASS         |    |    ||||||    Assert:FAIL         Assert
                     |    |    Assert:PASS
                     |    Assert:PASS
                     Assert:PASS
+
+
+
+BUILD TOOLS
+
+  IDE: SlickEdit Version 11.0.0 Copyright 1988-2006 SlickEdit Inc.
+       Technical Support Phone: 1 919.473.0070
+       Technical Support Email: support@slickedit.com
+
+  Cygwin v 3.1.7
+       CYGWIN_NT-10.0 Lenovo-PC 3.1.7(0.340/5/3) 2020-08-22 17:48 x86_64 Cygwin
+       https://www.cygwin.com/install.html
+
+  Compiler:
+       gcc (GCC) 10.2.0
+
+
+  
+BUILD
+
+1. Start Cygwin
+2. >cd cf01/slickedit_gcc
+3. >make --makefile=cf01.mak CFG=Debug
+4. >make --makefile=cf01_test.mak CFG=Debug
+(configurations = Debug, Release, or Profile)
+
+
+TEST
+
+1. Start Cygwin
+2. >cd cf01/slickedit_gcc/Debug
+3. >./cf01_test.exe
+4. >./cf01_test.exe
+5. >./cf01_test.exe
+6. Open cf01_jrnl.txt in text editor
+
+
+WINDOWS DEPLOYMENT
+
+In same directory as cf01_test.exe, place the following files:
+  cyggcc_s-seh-1.dll
+  cygstdc++-6.dll
+  cygwin1.dll
+
+These can be found in [CYGWIN INSTALLATION DIRECTORY]\cygwin\cygwin64\bin
 
 
 
