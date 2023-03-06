@@ -37,9 +37,9 @@ _condition - boolean value or function.  TRUE=> data is ok, FALSE=>some error
 #define CF01_AUTO_ASSERT( _condition ) {                                   \
     cf01_auto_assert_wksp::get_instance()->incr_p_count();                 \
     if (cf01_auto_assert_wksp::get_instance()->should_run_aasrt()){        \
-        bool result = (_condition);                                        \
+        bool _result = (_condition);                                       \
         cf01_auto_assert_wksp::get_instance()->report_aasrt_result(        \
-            result, __FILE__, __LINE__, __FUNCTION__, #_condition );       \
+            _result, __FILE__, __LINE__, __FUNCTION__, #_condition );      \
         }                                                                  \
     }
 
@@ -50,9 +50,9 @@ _condition - boolean value or function.  TRUE=> data is ok, FALSE=>some error
 /* run extra debug assertion, if debug level meets criteria */
 #define CF01_AA_XDBG_ASSERT( _condition, _dbg_lvl ){                    \
     if(CF01_AA_SHOULD_RUN_XDBG(_dbg_lvl)){                              \
-        bool result = (_condition);                                     \
+        bool _result = (_condition);                                    \
         cf01_auto_assert_wksp::get_instance()->report_aasrt_result(     \
-            result, __FILE__, __LINE__, __FUNCTION__, #_condition);     \
+            _result, __FILE__, __LINE__, __FUNCTION__, #_condition);    \
         }                                                               \
     }
 

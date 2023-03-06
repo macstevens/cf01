@@ -745,8 +745,10 @@ if(NULL != aasrt_result){
     (aasrt_result->m_err_msg).insert( (aasrt_result->m_err_msg).end(),
         &(m_utility_err_buf[0]), &(m_utility_err_buf[m_utility_err_buf_pos]));
 
-    /* clear utility buffer */
-    clear_utility_err_buf(); \
+    if( should_save_to_file ){
+        /* clear utility buffer */
+        clear_utility_err_buf();
+        }
     }
 
 if((NULL != aasrt_result) && should_save_to_file){
