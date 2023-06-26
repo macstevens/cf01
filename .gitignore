@@ -9,3 +9,4 @@ main_exe
 *.vtg
 cf01_jrnl.txt
 *.exe
+/slickedit_gcc/Debug/

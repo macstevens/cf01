@@ -1,4 +1,4 @@
-cf01 -- C-Flat Library Version 01
+cf01 -- C-Flat 01 Library Version 0.2.0
 
 
 LICENSE
@@ -21,7 +21,8 @@ C-flat implemented in C.  It is barely started.  For more information,
 see commit e42fae1756c3e54786300e86e4895809bc39e62c.
 
 cf01 is the version implemented in C++.  In 2021, the first tool of
-practical use was implemented: Auto-Assert.
+practical use was implemented: Auto-Assert.  In 2023, the hash
+consistency check was implemented.
 
 
 
@@ -91,6 +92,105 @@ Assert:PASS         |    |    ||||||    Assert:FAIL         Assert
                     |    |    Assert:PASS
                     |    Assert:PASS
                     Assert:PASS
+
+
+
+HASH CONSISTENCY CHECK
+
+The goal of the hash consistency check is to discover if a program does not
+run consistently and where exactly the inconsistency is introduced.  One or
+more hash functions must be supplied by the user.  Each hash function
+should be a hash function of internal state, output, or any other data
+that should be consistent from run to run.  Each hash function should have
+no side effects -- no effect on internal state or result. 
+
+At various locations in the code, the hash consistency check is called.
+This causes the CF01 workspace to either a) most often, do nothing, or
+b) call the supplied hash function and save the result.  It chooses
+a) or b) according to several criteria.  It will call the hash function
+ 1. on a fixed schedule
+ 2. if sufficient time has elapsed without calling the hash function
+ 3. if the hash function was recorded on a previous run
+ 4. at additional times to isolate where the inconsistency is introduced
+
+Example:
+
+Run 1
++----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+|                   |                   |                   |
+hc_chk:a4           hc_chk:31           hc_chk:97           hc_chk:f6
+
+Run 2
++----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+|                   |                   |                   |
+hc_chk:a4           hc_chk:31           hc_chk:97           hc_chk:dd:mismatch
+
+Run 3
++----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+|                   |                   |    |    |    |    |
+hc_chk:a4           hc_chk:31           |    |    |    |    hc_chk:37:mismatch
+                                        |    |    |    hc_chk:27
+                                        |    |    hc_chk:68
+                                        |    hc_chk:52
+                                        hc_chk:97
+
+Run 4
++----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+|                   |                   |    |    |    |    |
+hc_chk:a4           hc_chk:31           |    |    |    |    hc_chk:29:mismatch
+                                        |    |    |    hc_chk:55:mismatch
+                                        |    |    hc_chk:68
+                                        |    hc_chk:52
+                                        hc_chk:97
+
+Run 5
++----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+|                   |                   |    |    ||||||    |
+hc_chk:a4           hc_chk:31           |    |    ||||||    hc_chk:15:mismatch
+                                        |    |    |||||hc_chk:48:mismatch
+                                        |    |    ||||hc_chk:27
+                                        |    |    |||hc_chk:79
+                                        |    |    ||hc_chk:03
+                                        |    |    |hc_chk:12
+                                        |    |    hc_chk:68
+                                        |    hc_chk:52
+                                        hc_chk:97
+
+                                        inconsistency introduced here
+                                                     |  
+Run 6                                                V
++----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+|                   |                   |    |    ||||||    |
+hc_chk:a4           hc_chk:31           |    |    ||||||    hc_chk:43:mismatch
+                                        |    |    |||||hc_chk:60:mismatch
+                                        |    |    ||||hc_chk:42:mismatch
+                                        |    |    |||hc_chk:74:mismatch
+                                        |    |    ||hc_chk:03
+                                        |    |    |hc_chk:12
+                                        |    |    hc_chk:68
+                                        |    hc_chk:52
+                                        hc_chk:97
+
+
+
+Where to place Hash Consistency Check:
+ * Just after depth increment, hashing one or more fully initialized objects
+ * Between modifications to an object state.
+
+Where not to place Hash Consistency Check:
+ * in a hash function
+ * in initialization code.  Don't call a hash function on an uninitialized object.
+ * in destructor code.  Don't call a hash function on an uninitialized object.
+ * maybe(?) not in an invariant.  The idea is that if the object is in an invalid
+   state, the invariant might catch the problem, but the hash function could crash.
+
+The hash consistency check can also be used to detect an infinite loop. 
+If the code has been running too long, the journal file (cf01_jrnl.txt)
+will indicate which code is repeatedly running.
+
+
+
+
 
 
 
