@@ -32,10 +32,7 @@ CF01_AA_DECR_CALL_DEPTH();
 
 
 void hash_consistency_check_test_01(){
-int aa[3];
-aa[0] = 0;
-aa[1] = 0;
-aa[2] = 0;
+int aa[3] = {0};
 static const size_t ii_fail_idx = 1234;
 static const int ii_limit = 10000;
 CF01_AA_INCR_CALL_DEPTH();
@@ -56,10 +53,7 @@ CF01_AA_DECR_CALL_DEPTH();
 
 
 void hash_consistency_check_test_02(){
-int aa[3];
-aa[0] = 0;
-aa[1] = 0;
-aa[2] = 0;
+int aa[3] = {0};
 static const size_t ii_fail_idx = 12;
 static const size_t jj_fail_idx = 23;
 static const size_t kk_fail_idx = 34;
@@ -132,7 +126,6 @@ switch( test_choice ) {
         hash_consistency_check_test_01();    
         break;
     case 2:
-    default:
         CF01_SET_JRNL_WRITE_MODE_ON();     
         hash_consistency_check_test_02();  
         break;

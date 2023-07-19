@@ -163,7 +163,7 @@ m_jrnl_write_mode = m;
 }
 
 void cf01_auto_assert_wksp::init_aa_default(){
-cf01_call_idx_range_crit idx_range_crit;
+cf01_call_idx_range_crit idx_range_crit = {};
 memset(m_depth_call_idx_range_crit, 0, sizeof(m_depth_call_idx_range_crit));
 
 idx_range_crit.m_call_idx_range_end = 32;
@@ -691,7 +691,7 @@ else{
     std::cout << "\n";
     std::cout << " err_msg="<<(aasrt_result_fail->m_err_msg)<<"\n";
 
-    cf01_call_idx_range_crit idx_range_crit;
+    cf01_call_idx_range_crit idx_range_crit = {};
     for(cf01_depth_t call_depth = 0; call_depth < CF01_AASRT_CALL_DEPTH_COUNT;
         ++call_depth){
         cf01_uint64 p_count = (aasrt_result_fail->m_aasrt_p_count)[call_depth];
@@ -990,7 +990,7 @@ const cf01_call_idx_range_crit *idx_range_criteria =
     &( m_depth_call_idx_range_crit[m_call_depth][idx_crit_idx] );
 
 /* Get p_count.  Should be within range of idx_range_criteria */
-const cf01_uint8 p_cnt = m_curr_p_count[m_call_depth]; 
+const cf01_uint64 p_cnt = m_curr_p_count[m_call_depth]; 
 assert((idx_range_criteria->m_call_idx_range_end) == 0 || 
        ( p_cnt < idx_range_criteria->m_call_idx_range_end ) );
 
@@ -1668,7 +1668,8 @@ for( calld = 0; calld < CF01_AASRT_CALL_DEPTH_COUNT; ++calld ){
                 err_str->append("now < (unpub_r->m_time_stamp)\n");
                 }
             }
-        if( ((unpub_r->m_time_stamp) + ( 365 * 24 * 60 * 60 ) ) < now ){
+        if( ((unpub_r->m_time_stamp) + 
+             static_cast<time_t>( 365 * 24 * 60 * 60 ) ) < now ){
             ++err_cnt;
             if( NULL != err_str ){
                 err_str->append("(unpub_r->m_time_stamp) too long ago\n");
@@ -1681,9 +1682,9 @@ for( calld = 0; calld < CF01_AASRT_CALL_DEPTH_COUNT; ++calld ){
                 ++err_cnt;
                 if( NULL != err_str ){
                     char err_buf[256];
-                    sprintf( err_buf, "calld=%i "
-                        "prev_rcrd->m_check_index=%lu <="
-                        " unpub_r->m_check_index=%lu\n", calld, 
+                    sprintf( err_buf, "calld=%lli "
+                        "prev_rcrd->m_check_index=%llu <="
+                        " unpub_r->m_check_index=%llu\n", calld, 
                         prev_rcrd->m_check_index, unpub_r->m_check_index );
                     err_str->append( err_buf );
                     }
@@ -1693,9 +1694,9 @@ for( calld = 0; calld < CF01_AASRT_CALL_DEPTH_COUNT; ++calld ){
                 ++err_cnt;
                 if( NULL != err_str ){
                     char err_buf[256];
-                    sprintf( err_buf, "calld=%i " 
-                        " prev_rcrd->m_time_stamp=%lu <"
-                        " unpub_r->m_time_stamp=%lu\n", calld,
+                    sprintf( err_buf, "calld=%lli " 
+                        " prev_rcrd->m_time_stamp=%llu <"
+                        " unpub_r->m_time_stamp=%llu\n", calld,
                         prev_rcrd->m_time_stamp, unpub_r->m_time_stamp );
                     err_str->append( err_buf );
                     }
@@ -1776,9 +1777,9 @@ for( calld = 0; calld < CF01_AASRT_CALL_DEPTH_COUNT; ++calld ){
                 ++err_cnt;
                 if( NULL != err_str ){
                     char err_buf[256];
-                    sprintf( err_buf, "calld=%i "
-                        "prev_rcrd->m_check_index=%lu >="
-                        " guide_r->m_check_index=%lu\n", calld, 
+                    sprintf( err_buf, "calld=%lli "
+                        "prev_rcrd->m_check_index=%llu >="
+                        " guide_r->m_check_index=%llu\n", calld, 
                         prev_rcrd->m_check_index, guide_r->m_check_index );
                     err_str->append( err_buf );
                     }
@@ -1790,10 +1791,10 @@ for( calld = 0; calld < CF01_AASRT_CALL_DEPTH_COUNT; ++calld ){
                 ++err_cnt;
                 if( NULL != err_str ){
                     char err_buf[256];
-                    sprintf( err_buf, "calld=%i " 
-                        " prev_rcrd->m_time_stamp=%lu >"
-                        " (check_index=%lu) >"
-                        " guide_r->m_time_stamp=%lu (check_index=%lu)\n",
+                    sprintf( err_buf, "calld=%lli " 
+                        " prev_rcrd->m_time_stamp=%llu >"
+                        " (check_index=%llu) >"
+                        " guide_r->m_time_stamp=%llu (check_index=%llu)\n",
                         calld,
                         prev_rcrd->m_time_stamp, prev_rcrd->m_check_index,
                         guide_r->m_time_stamp, guide_r->m_check_index );
@@ -2058,7 +2059,7 @@ if( curr_check_index >= i_low ){
     frexp( static_cast<double>(curr_check_index), &n );
     assert( n > n_low );
     if( n <= n_high ){
-        next_check_index = 2 << n;
+        next_check_index = static_cast<cf01_uint64>(2) << n;
         }
     else{
         next_check_index = ( ( curr_check_index / i_high ) + 1 ) * i_high;
@@ -2140,7 +2141,7 @@ if( CF01_JRNL_WRITE_MODE_ON == m_jrnl_write_mode ){
         write_journal_start();
         }
 
-    cf01_uint16 i, end_idx;
+    cf01_uint16 i=0, end_idx=0;
     assert(NULL != r);
     std::ofstream os;
     os.open( m_jrnl_file_name, std::ofstream::out | std::ofstream::app );

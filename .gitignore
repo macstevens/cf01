@@ -10,3 +10,11 @@ main_exe
 cf01_jrnl.txt
 *.exe
 /slickedit_gcc/Debug/
+/.vs
+/msvc/cf01_test/x64
+/msvc/.vs/cf01/v17
+/msvc/.vs/cf01/FileContentIndex/
+/msvc/cf01/x64/
+/msvc/x64/
+*.vcxproj.filters
+*.vcxproj.user
