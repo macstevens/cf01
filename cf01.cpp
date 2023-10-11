@@ -20,6 +20,11 @@ Reference: https://opensource.org/licenses/ISC
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#if(( __cplusplus > 199711L ) || ( defined(_MSVC_LANG) && (_MSVC_LANG > 199711L ) )) 
+#include <tuple>
+#endif
+
 #include "cf01.h"
 
 
@@ -2056,6 +2061,9 @@ static const cf01_uint64 i_max = std::numeric_limits<cf01_uint64>::max();
 cf01_uint64 next_check_index = i_low;
 if( curr_check_index >= i_low ){
     int n = 0;
+    #if(( __cplusplus > 199711L ) || ( defined(_MSVC_LANG) && (_MSVC_LANG > 199711L ) )) 
+    std::ignore =
+    #endif
     frexp( static_cast<double>(curr_check_index), &n );
     assert( n > n_low );
     if( n <= n_high ){
