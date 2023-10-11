@@ -62,6 +62,15 @@ Reference: https://opensource.org/licenses/ISC
 #define CF01_AA_DECR_CALL_DEPTH() \
     {cf01_auto_assert_wksp::get_instance()->decr_call_depth();}
 
+/* Place at beginning of function to increment call depth.  
+No need for other macro at end because the destructor automatically 
+handles decrementing call depth. 
+
+Use this instead of CF01_AA_INCR_CALL_DEPTH() / CF01_AA_DECR_CALL_DEPTH() */
+#define CF01_AA_CALL_DEPTH_BLOCK() \
+    cf01_auto_assert_call_depth_object _local_call_depth_object##__LINE__(   \
+        __FILE__, __LINE__, __FUNCTION__ );
+
 /* Place CF01_AUTO_ASSERT(_condition) wherever an invariant function
   would go.
 _condition - boolean value or function.  TRUE=> data is ok, FALSE=>some error
@@ -93,7 +102,7 @@ repeatable results.
 
 _hash - hash value or function.  type = unsigned integer, 64-bits or smaller
 
-Has function should be computed from current state of algorithm, current
+Hash function should be computed from current state of algorithm, current
 data, etc.  Subsequent runs with same input data should generate identical
 sequence of hash values.
 */
@@ -570,6 +579,26 @@ private:
     void publish_hc_chk_rcrd(const cf01_depth_t& depth,
         const cf01_hc_chk_rcrd *r);
 };
+
+
+/*
+Initialize this object to increment call depth.  Destroy to decrement.
+*/
+class cf01_auto_assert_call_depth_object{
+public:
+    /* constructor increments call depth */
+    cf01_auto_assert_call_depth_object(const char *file_name = NULL, 
+        const int line_num = 0, const char *function = NULL){
+        cf01_auto_assert_wksp::get_instance()->incr_call_depth(
+            file_name, line_num, function );
+        }
+    /* destructor decrements call depth */
+   ~cf01_auto_assert_call_depth_object(){ 
+        cf01_auto_assert_wksp::get_instance()->decr_call_depth();
+        }
+private: /* no internal data */
+};
+
 
 template <typename Obj>
 cf01_uint64 cf01_obj_hash( const cf01_uint64 &h_in, const Obj& obj ){

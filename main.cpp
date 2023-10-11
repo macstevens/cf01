@@ -8,7 +8,7 @@
 
 
 void auto_assert_test_01(){
-CF01_AA_INCR_CALL_DEPTH();
+CF01_AA_CALL_DEPTH_BLOCK()
 CF01_AUTO_ASSERT( true );
 for (int a = 0; a < 100; ++a) {
     CF01_AA_INCR_CALL_DEPTH();
@@ -27,7 +27,6 @@ for (int a = 0; a < 100; ++a) {
         }
     CF01_AA_DECR_CALL_DEPTH();
     }
-CF01_AA_DECR_CALL_DEPTH();
 }
 
 
@@ -37,7 +36,7 @@ static const size_t ii_fail_idx = 1234;
 static const int ii_limit = 10000;
 CF01_AA_INCR_CALL_DEPTH();
 for( size_t ii = 0; ii < ii_limit; ++ii ) {
-    CF01_AA_INCR_CALL_DEPTH();
+    CF01_AA_CALL_DEPTH_BLOCK()
     ++(aa[0]);
     const bool fail = ( ii == ii_fail_idx ) ? true : false;
     if( fail ){
@@ -46,7 +45,6 @@ for( size_t ii = 0; ii < ii_limit; ++ii ) {
         }
     CF01_HASH_CONSISTENCY_CHECK( cf01_auto_assert_wksp::default_hash( 0,
         reinterpret_cast<const cf01_uint8 *>(aa), sizeof(aa) ) );
-    CF01_AA_DECR_CALL_DEPTH();
     }
 CF01_AA_DECR_CALL_DEPTH();
 }
@@ -66,7 +64,7 @@ for( size_t ii = 0; ii < ijk_limit; ++ii ) {
         ++(aa[1]);
         CF01_AA_INCR_CALL_DEPTH();
         for( size_t kk = 0; kk < ijk_limit; ++kk ) {
-            CF01_AA_INCR_CALL_DEPTH();
+            CF01_AA_CALL_DEPTH_BLOCK()
             ++(aa[2]);
             const bool fail = ( ( ii == ii_fail_idx ) &&
                                 ( jj == jj_fail_idx ) &&
@@ -77,7 +75,6 @@ for( size_t ii = 0; ii < ijk_limit; ++ii ) {
                 }
             CF01_HASH_CONSISTENCY_CHECK( cf01_auto_assert_wksp::default_hash( 0,
                 reinterpret_cast<const cf01_uint8 *>(aa), sizeof(aa) ) );
-            CF01_AA_DECR_CALL_DEPTH();
             }
         CF01_HASH_CONSISTENCY_CHECK( cf01_auto_assert_wksp::default_hash( 0,
             reinterpret_cast<const cf01_uint8 *>(aa), sizeof(aa) ) );
