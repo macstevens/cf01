@@ -2086,14 +2086,18 @@ time_t cf01_auto_assert_wksp::calc_next_check_deadline(
     const cf01_uint64& curr_check_index, const time_t& now ){
 struct i_t{ cf01_uint64 m_i; time_t m_t; };
 static const i_t i_t_array[] = {
-    { 128,          1 },
-    { 512,          2 },
-    { 2048,         4 },
-    { 8192,         8 },
+    {   1,            1 },
+    {   4,            2 },
+    {   8,            4 },
+    {  16,            8 },
+    {  32,           16 },
+    { 128,           32 },
+    { 512,           64 },
+    { 2048,         128 },
     };
 static const size_t i_t_count = sizeof(i_t_array)/sizeof(i_t_array[0]);
 
-static const time_t t_delta_max = 30;
+static const time_t t_delta_max = 256;
 size_t j = 0;
 time_t t_delta = t_delta_max;
 bool done = false;
