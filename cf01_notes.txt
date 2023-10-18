@@ -1,4 +1,4 @@
-cf01 -- C-Flat 01 Library Version 0.2.0
+cf01 -- C-Flat 01 Library Version 0.3.0
 
 
 LICENSE
@@ -192,7 +192,7 @@ will indicate which code is repeatedly running.
 
 
 
-
+=== CYGWIN/GCC ===
 
 BUILD TOOLS
 
@@ -212,7 +212,7 @@ BUILD TOOLS
 BUILD
 
 1. Start Cygwin
-2. >cd cf01/slickedit_gcc
+2. >cd cf01/gcc
 3. >make --makefile=cf01.mak CFG=Debug
 4. >make --makefile=cf01_test.mak CFG=Debug
 (configurations = Debug, Release, or Profile)
@@ -221,11 +221,11 @@ BUILD
 TEST
 
 1. Start Cygwin
-2. >cd cf01/slickedit_gcc/Debug
+2. >cd cf01/gcc/Debug
 3. >./cf01_test.exe
 4. >./cf01_test.exe
 5. >./cf01_test.exe
-6. Open cf01_jrnl.txt in text editor
+6. >more cf01_jrnl.txt
 
 
 WINDOWS DEPLOYMENT
@@ -239,3 +239,31 @@ These can be found in [CYGWIN INSTALLATION DIRECTORY]\cygwin\cygwin64\bin
 
 
 
+=== WINDOWS/MICROSOFT VISUAL STUDIO ===
+
+BUILD TOOLS
+
+  Microsoft Visual Studio Professional 2022 (2)
+    Version 17.6.5
+    VisualStudio.17.Release/17.6.5+33829.357
+    Microsoft .NET Framework
+    Version 4.8.09037
+    
+  Visual C++ 2022   00476-80000-00000-AA260
+    Microsoft Visual C++ 2022
+
+
+BUILD
+
+1. Open cf01\msvc\cf01.sln in Microsoft Visual Studio
+2. Configuration: Debug/x64
+3. Build cf01_test project
+
+
+TEST
+1. Open command termina.
+2. >cd cf01\msvc\x64\Debug
+3. >cf01_test.exe
+4. >cf01_test.exe
+5. >cf01_test.exe
+6. >notepad cf01_jrnl.txt
