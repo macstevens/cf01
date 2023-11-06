@@ -24,6 +24,11 @@ Reference: https://opensource.org/licenses/ISC
 #include <time.h>
 #include <string>
 
+/* Call CF01_ENABLE(true) early in the startup sequence to enable CF01 system.
+To disable, call CF01_ENABLE(true) or omit.
+*/
+#define CF01_ENABLE( _cf01_wksp_enabled ) {              \
+    cf01_auto_assert_wksp::get_instance()->enable_wksp(_cf01_wksp_enabled); }
 
 /* Call CF01_SET_JRNL_WRITE_MODE_(OFF/ON_ERROR/ON) early in the startup sequence.
 */
@@ -353,6 +358,9 @@ public:
 class cf01_auto_assert_wksp
 {
 private:
+    /* overall enable/disable flag */
+    bool m_wksp_enabled;
+
     /* journal write mode */
     cf01_jrnl_write_mode m_jrnl_write_mode;
 
@@ -452,6 +460,7 @@ public:
    ~cf01_auto_assert_wksp();
 
     /* initialize */
+    void enable_wksp(const bool& wksp_enabled);
     void set_jrnl_write_mode( const cf01_jrnl_write_mode& m,
         const char *file_name = NULL, const int line_num = 0,
         const char *function = NULL);
@@ -475,28 +484,30 @@ public:
     /* Increment call depth. call at beginning of function */
     void incr_call_depth( const char *file_name = NULL, const int line_num = 0,
         const char *function = NULL ){
-        if( m_call_depth_unlimited < std::numeric_limits<cf01_uint64>::max() ){
-            ++m_call_depth_unlimited; }
-        m_call_depth =
-            (m_call_depth_unlimited < (CF01_AASRT_CALL_DEPTH_COUNT-1)) ?
-            m_call_depth_unlimited : (CF01_AASRT_CALL_DEPTH_COUNT-1);
-        ++(m_curr_t_count[m_call_depth]);
-        if( m_call_depth_unlimited > (CF01_AASRT_CALL_DEPTH_COUNT-1) ){
-            static cf01_depth_t max_d = 0;
-            if( m_call_depth_unlimited > max_d ){    
-                max_d = m_call_depth_unlimited;
-                static int printf_count = 0;
-                static const int max_printf_count = 64;
-                if( printf_count < max_printf_count ){
-                    std::cout << "CF01 incr_call_depth() m_call_depth_unlimited = "
-                        << m_call_depth_unlimited << " > "
-                        << (CF01_AASRT_CALL_DEPTH_COUNT-1)
-                        << "  file="
-                        << ( ( NULL == file_name ) ? "" : file_name )
-                        << "  line_num=" << line_num
-                        << "  function=" << (( NULL == function ) ? "" : function)
-                        << "\n";
-                    ++printf_count;
+        if(m_wksp_enabled){
+            if( m_call_depth_unlimited < std::numeric_limits<cf01_uint64>::max() ){
+                ++m_call_depth_unlimited; }
+            m_call_depth =
+                (m_call_depth_unlimited < (CF01_AASRT_CALL_DEPTH_COUNT-1)) ?
+                m_call_depth_unlimited : (CF01_AASRT_CALL_DEPTH_COUNT-1);
+            ++(m_curr_t_count[m_call_depth]);
+            if( m_call_depth_unlimited > (CF01_AASRT_CALL_DEPTH_COUNT-1) ){
+                static cf01_depth_t max_d = 0;
+                if( m_call_depth_unlimited > max_d ){    
+                    max_d = m_call_depth_unlimited;
+                    static int printf_count = 0;
+                    static const int max_printf_count = 64;
+                    if( printf_count < max_printf_count ){
+                        std::cout << "CF01 incr_call_depth() m_call_depth_unlimited = "
+                            << m_call_depth_unlimited << " > "
+                            << (CF01_AASRT_CALL_DEPTH_COUNT-1)
+                            << "  file="
+                            << ( ( NULL == file_name ) ? "" : file_name )
+                            << "  line_num=" << line_num
+                            << "  function=" << (( NULL == function ) ? "" : function)
+                            << "\n";
+                        ++printf_count;
+                        }
                     }
                 }
             }
@@ -504,11 +515,13 @@ public:
 
     /* Decrement call depth. call at end of function */
     void decr_call_depth() {
-        m_call_depth_unlimited = (m_call_depth_unlimited > 0) ?
-            m_call_depth_unlimited - 1 : 0; 
-        m_call_depth =
-            (m_call_depth_unlimited < (CF01_AASRT_CALL_DEPTH_COUNT-1)) ?
-            m_call_depth_unlimited : (CF01_AASRT_CALL_DEPTH_COUNT-1);
+        if(m_wksp_enabled){
+            m_call_depth_unlimited = (m_call_depth_unlimited > 0) ?
+                m_call_depth_unlimited - 1 : 0; 
+            m_call_depth =
+                (m_call_depth_unlimited < (CF01_AASRT_CALL_DEPTH_COUNT-1)) ?
+                m_call_depth_unlimited : (CF01_AASRT_CALL_DEPTH_COUNT-1);
+            }
         }
 
     cf01_depth_t get_call_depth() const { return m_call_depth; }
@@ -528,13 +541,16 @@ public:
         const cf01_hc_chk_depth_rcrd *hc_chk_depth_rcrd =
             &( m_hc_chk_depth_rcrds[m_call_depth] );
         bool should_run = false;
-        if( hc_chk_depth_rcrd->m_check_index >= hc_chk_depth_rcrd->m_next_check_index ){
-            should_run = true;
-            }
-        else{
-            const time_t now = time(NULL);
-            if( now >= hc_chk_depth_rcrd->m_next_check_deadline ){
+        if( m_wksp_enabled ){
+            if( hc_chk_depth_rcrd->m_check_index >= 
+                hc_chk_depth_rcrd->m_next_check_index ){
                 should_run = true;
+                }
+            else{
+                const time_t now = time(NULL);
+                if( now >= hc_chk_depth_rcrd->m_next_check_deadline ){
+                    should_run = true;
+                    }
                 }
             }
         return should_run;

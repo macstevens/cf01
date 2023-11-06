@@ -104,6 +104,7 @@ printf( "[%i] done\n", argc );
 
 int main(int argc, char** argv)
 {
+CF01_ENABLE(true);
 std::string msg;
 msg = "CF01 Test Program\n";
 printf( "[%i]%s", argc, msg.c_str() );

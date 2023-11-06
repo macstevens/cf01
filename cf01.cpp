@@ -129,6 +129,7 @@ cf01_auto_assert_wksp cf01_auto_assert_wksp::m_instance;
 const char * const cf01_auto_assert_wksp::m_jrnl_file_name = "cf01_jrnl.txt";
 
 cf01_auto_assert_wksp::cf01_auto_assert_wksp():
+    m_wksp_enabled(false),
     m_jrnl_write_mode(CF01_JRNL_WRITE_MODE_DEFAULT),
     m_jrnl_write_started(false),
     m_call_depth(0),
@@ -157,6 +158,10 @@ publish_hc_chk_rcrds();
 if( m_jrnl_write_started ){
     write_journal_end();
     }
+}
+
+void cf01_auto_assert_wksp::enable_wksp(const bool& wksp_enabled){
+m_wksp_enabled = wksp_enabled;
 }
 
 void cf01_auto_assert_wksp::set_jrnl_write_mode(
@@ -945,39 +950,42 @@ if(NULL != result){
 /* increment p_count.  Call this when a standard assertion is reached */
 void cf01_auto_assert_wksp::incr_p_count()
 {
-cf01_uint64 p_cnt;
-cf01_uint8 idx_crit_idx;
+if(m_wksp_enabled){
+    cf01_uint64 p_cnt;
+    cf01_uint8 idx_crit_idx;
 
-/* update m_curr_p_count[] */
-p_cnt = m_curr_p_count[m_call_depth];
-if( p_cnt < std::numeric_limits<cf01_uint64>::max() )
-    {
-    ++p_cnt;
-    }
-m_curr_p_count[m_call_depth] = p_cnt;
-
-/* update m_idx_crit_idx[] */
-idx_crit_idx = m_idx_crit_idx[m_call_depth];
-if( idx_crit_idx < ( CF01_AASRT_CALL_IDX_RANGE_COUNT - 1 ) )
-    {
-    cf01_call_idx_range_crit const *idx_range_criteria =
-         &( m_depth_call_idx_range_crit[m_call_depth][idx_crit_idx] );
-
-    if( 0 == idx_range_criteria->m_call_idx_range_end ) 
+    /* update m_curr_p_count[] */
+    p_cnt = m_curr_p_count[m_call_depth];
+    if( p_cnt < std::numeric_limits<cf01_uint64>::max() )
         {
-        /* range_end==0 => unlimited range for idx_range_criteria. no update */
+        ++p_cnt;
         }
-    else if(p_cnt < idx_range_criteria->m_call_idx_range_end)
+    m_curr_p_count[m_call_depth] = p_cnt;
+
+    /* update m_idx_crit_idx[] */
+    idx_crit_idx = m_idx_crit_idx[m_call_depth];
+    if( idx_crit_idx < ( CF01_AASRT_CALL_IDX_RANGE_COUNT - 1 ) )
         {
-        /* p_cnt is within range for idx_range_criteria. no update */
-        }
-    else
-        {
-        /* p_cnt is past the range for idx_range_criteria. do update.
-        first, check that p_cnt is only one past the range */
-        assert( p_cnt == idx_range_criteria->m_call_idx_range_end );
-        ++idx_crit_idx;
-        m_idx_crit_idx[m_call_depth] = idx_crit_idx; 
+        cf01_call_idx_range_crit const *idx_range_criteria =
+             &( m_depth_call_idx_range_crit[m_call_depth][idx_crit_idx] );
+
+        if( 0 == idx_range_criteria->m_call_idx_range_end ) 
+            {
+            /* range_end==0 => unlimited range for idx_range_criteria. 
+            no update */
+            }
+        else if(p_cnt < idx_range_criteria->m_call_idx_range_end)
+            {
+            /* p_cnt is within range for idx_range_criteria. no update */
+            }
+        else
+            {
+            /* p_cnt is past the range for idx_range_criteria. do update.
+            first, check that p_cnt is only one past the range */
+            assert( p_cnt == idx_range_criteria->m_call_idx_range_end );
+            ++idx_crit_idx;
+            m_idx_crit_idx[m_call_depth] = idx_crit_idx; 
+            }
         }
     }
 } 
@@ -987,22 +995,25 @@ if( idx_crit_idx < ( CF01_AASRT_CALL_IDX_RANGE_COUNT - 1 ) )
 extra debug assertions or code. */
 bool cf01_auto_assert_wksp::should_run_aasrt() const
 {
-/* get criteria */
-assert( m_call_depth < CF01_AASRT_CALL_DEPTH_COUNT);
-const cf01_uint8 idx_crit_idx = m_idx_crit_idx[m_call_depth];
-assert( idx_crit_idx < CF01_AASRT_CALL_IDX_RANGE_COUNT);
-const cf01_call_idx_range_crit *idx_range_criteria =
-    &( m_depth_call_idx_range_crit[m_call_depth][idx_crit_idx] );
-
-/* Get p_count.  Should be within range of idx_range_criteria */
-const cf01_uint64 p_cnt = m_curr_p_count[m_call_depth]; 
-assert((idx_range_criteria->m_call_idx_range_end) == 0 || 
-       ( p_cnt < idx_range_criteria->m_call_idx_range_end ) );
-
-/* if p_count % div == mod, then assertion should be run */
-bool result = ( ( idx_range_criteria->m_call_idx_div > 0) && 
-    ( p_cnt % (idx_range_criteria->m_call_idx_div) ==
-      ( idx_range_criteria->m_call_idx_mod ) ) ) ? true : false;
+bool result = false;
+if( m_wksp_enabled ){
+    /* get criteria */
+    assert( m_call_depth < CF01_AASRT_CALL_DEPTH_COUNT);
+    const cf01_uint8 idx_crit_idx = m_idx_crit_idx[m_call_depth];
+    assert( idx_crit_idx < CF01_AASRT_CALL_IDX_RANGE_COUNT);
+    const cf01_call_idx_range_crit *idx_range_criteria =
+        &( m_depth_call_idx_range_crit[m_call_depth][idx_crit_idx] );
+    
+    /* Get p_count.  Should be within range of idx_range_criteria */
+    const cf01_uint64 p_cnt = m_curr_p_count[m_call_depth]; 
+    assert((idx_range_criteria->m_call_idx_range_end) == 0 || 
+           ( p_cnt < idx_range_criteria->m_call_idx_range_end ) );
+    
+    /* if p_count % div == mod, then assertion should be run */
+    result = ( ( idx_range_criteria->m_call_idx_div > 0) && 
+        ( p_cnt % (idx_range_criteria->m_call_idx_div) ==
+          ( idx_range_criteria->m_call_idx_mod ) ) ) ? true : false;
+    }
 return result;
 }
 
@@ -1012,29 +1023,30 @@ bool cf01_auto_assert_wksp::should_run_xdbg(const cf01_uint8& dbg_lvl) const
 assert(m_call_depth < CF01_AASRT_CALL_DEPTH_COUNT); 
 
 bool result = false;
-const cf01_uint64 t_count = m_curr_t_count[m_call_depth];
- 
-/* Extra debug code and assertions with debug level at or below
-m_xdbg_ctrl_dbg_lvl[d] will be executed when transition count is at or 
-above m_xdbg_ctrl_t_count[d] */
-if( ( t_count >= m_xdbg_ctrl_t_count[m_call_depth] ) &&
-    ( dbg_lvl <= m_xdbg_ctrl_dbg_lvl[m_call_depth] ) )
-    {
-    if( m_aasrt_result_first_failed.m_done )
-        {
-        /* if an assertion has already failed,
-        then don't run any more extra debug code */
-        assert( !m_aasrt_result_first_failed.m_pass );
-        assert(!result);
-        }
-    else
-        {
-        /* if all auto-assertions so far have passed,
-        then run extra debug code */
-        result = true;
-        }
-    }
-   
+if( m_wksp_enabled ){
+    const cf01_uint64 t_count = m_curr_t_count[m_call_depth];
+     
+    /* Extra debug code and assertions with debug level at or below
+    m_xdbg_ctrl_dbg_lvl[d] will be executed when transition count is at or
+    above m_xdbg_ctrl_t_count[d] */
+    if( ( t_count >= m_xdbg_ctrl_t_count[m_call_depth] ) &&
+       ( dbg_lvl <= m_xdbg_ctrl_dbg_lvl[m_call_depth] ) )
+       {
+       if( m_aasrt_result_first_failed.m_done )
+           {
+           /* if an assertion has already failed,
+           then don't run any more extra debug code */
+           assert( !m_aasrt_result_first_failed.m_pass );
+           assert(!result);
+           }
+       else
+           {
+           /* if all auto-assertions so far have passed,
+           then run extra debug code */
+           result = true;
+           }
+       }
+   }
 return result;
 }
 
@@ -1067,9 +1079,12 @@ if(NULL != aasrt_result){
 
     /* error message = condition string + utility error message */
     (aasrt_result->m_err_msg).assign(condition_str);
-    (aasrt_result->m_err_msg)+="\n";
-    (aasrt_result->m_err_msg).insert( (aasrt_result->m_err_msg).end(),
-        &(m_utility_err_buf[0]), &(m_utility_err_buf[m_utility_err_buf_pos]));
+    if(m_utility_err_buf_pos > 0){
+        (aasrt_result->m_err_msg)+="\n";
+        (aasrt_result->m_err_msg).insert( (aasrt_result->m_err_msg).end(),
+            &(m_utility_err_buf[0]),
+            &(m_utility_err_buf[m_utility_err_buf_pos]) );
+        }
 
     if( should_save_to_file ){
         /* clear utility buffer */
@@ -1096,129 +1111,131 @@ cf01_hc_chk_depth_rcrd *hc_chk_depth_rcrd =
 void cf01_auto_assert_wksp::hash_consistency_check( const cf01_uint64 hash,
     const char *file_name, const int line_num, const char *function,
     const char *hash_cmd_str){
-assert( m_call_depth < CF01_AASRT_CALL_DEPTH_COUNT );
-cf01_hc_chk_depth_rcrd *hc_chk_depth_rcrd =
-    &( m_hc_chk_depth_rcrds[m_call_depth] );
-const cf01_hc_chk_rcrd *guide_rcrd = hc_chk_depth_rcrd->m_guide_rcrds;
-bool retire_guide_rcrd = false;
-cf01_hc_chk_rcrd *curr_run_rcrd = alloc_hc_chk_rcrd();
-const time_t now = time(NULL);
-
-    //{
-    //// ../cf01.cpp[1096]  hash_consistency_check  XXXX  depth=3  check_index=161  hash=1370c86748aa1d02  guide_rcrd->m_check_index=207
-    //std::cout << __FILE__ << "[" << __LINE__ << "]"
-    //    << "  hash_consistency_check  type=" 
-    //    << ((NULL == guide_rcrd) ? 9999 : static_cast<int>( guide_rcrd->m_rcrd_type )) 
-    //    << " ";
-    //if( ( NULL == guide_rcrd ) ||
-    //    ( guide_rcrd->m_rcrd_type != CF01_HC_CHK_RCRD_TYPE_DONE_PREV_RUN ) ){
-    //    std::cout << "----  ";
-    //    }
-    //else if( guide_rcrd->m_check_index != hc_chk_depth_rcrd->m_check_index ){
-    //    std::cout << "XXXX  ";
-    //    }
-    //else if( guide_rcrd->m_hash == hash ){
-    //    std::cout << "PASS  ";
-    //    }
-    //else{
-    //    std::cout << "FAIL  ";
-    //    }
-    //
-    //std::cout << "depth=" << m_call_depth 
-    //    << "  check_index=" << (hc_chk_depth_rcrd->m_check_index)
-    //    << "  hash=" << cf01_uint64_to_hex_str(hash);
-    //if( NULL != guide_rcrd ){
-    //    std::cout << "  guide_rcrd->m_check_index=" << guide_rcrd->m_check_index;
-    //    if( guide_rcrd->m_check_index == hc_chk_depth_rcrd->m_check_index ){
-    //        std::cout << "  prev_hash=" << cf01_uint64_to_hex_str(guide_rcrd->m_hash);
-    //        }
-    //    }
-    //std::cout << "\n";
-    //}
-
-
-if( NULL != curr_run_rcrd ){
-    /* initialize current run record */
-    curr_run_rcrd->m_rcrd_type = CF01_HC_CHK_RCRD_TYPE_DONE_THIS_RUN;
-    curr_run_rcrd->m_time_stamp = now;
-    curr_run_rcrd->m_check_index = hc_chk_depth_rcrd->m_check_index;
-    curr_run_rcrd->m_hash = hash;
-
-    /* check hash mismatch */
-    if( NULL == guide_rcrd ){
-        /* no previous record */
-        curr_run_rcrd->m_mismatch_prev_run = false;
-        }
-    else if( guide_rcrd->m_check_index != hc_chk_depth_rcrd->m_check_index ){
-        /* previous record exists, but check index has not reached that record */
-        assert( guide_rcrd->m_check_index > hc_chk_depth_rcrd->m_check_index );
-        curr_run_rcrd->m_mismatch_prev_run = false;
-        }
-    else{
-        /* check index matches */
-        if( CF01_HC_CHK_RCRD_TYPE_DONE_PREV_RUN != guide_rcrd->m_rcrd_type ){
-            /* no previous hash value to check because this is a guide */
-            assert( 0 == guide_rcrd->m_hash );
-            assert( CF01_HC_CHK_RCRD_TYPE_GUIDE == guide_rcrd->m_rcrd_type );
+if( m_wksp_enabled ){
+    assert( m_call_depth < CF01_AASRT_CALL_DEPTH_COUNT );
+    cf01_hc_chk_depth_rcrd *hc_chk_depth_rcrd =
+        &( m_hc_chk_depth_rcrds[m_call_depth] );
+    const cf01_hc_chk_rcrd *guide_rcrd = hc_chk_depth_rcrd->m_guide_rcrds;
+    bool retire_guide_rcrd = false;
+    cf01_hc_chk_rcrd *curr_run_rcrd = alloc_hc_chk_rcrd();
+    const time_t now = time(NULL);
+    
+        //{
+        //// ../cf01.cpp[1096]  hash_consistency_check  XXXX  depth=3  check_index=161  hash=1370c86748aa1d02  guide_rcrd->m_check_index=207
+        //std::cout << __FILE__ << "[" << __LINE__ << "]"
+        //    << "  hash_consistency_check  type=" 
+        //    << ((NULL == guide_rcrd) ? 9999 : static_cast<int>( guide_rcrd->m_rcrd_type )) 
+        //    << " ";
+        //if( ( NULL == guide_rcrd ) ||
+        //    ( guide_rcrd->m_rcrd_type != CF01_HC_CHK_RCRD_TYPE_DONE_PREV_RUN ) ){
+        //    std::cout << "----  ";
+        //    }
+        //else if( guide_rcrd->m_check_index != hc_chk_depth_rcrd->m_check_index ){
+        //    std::cout << "XXXX  ";
+        //    }
+        //else if( guide_rcrd->m_hash == hash ){
+        //    std::cout << "PASS  ";
+        //    }
+        //else{
+        //    std::cout << "FAIL  ";
+        //    }
+        //
+        //std::cout << "depth=" << m_call_depth 
+        //    << "  check_index=" << (hc_chk_depth_rcrd->m_check_index)
+        //    << "  hash=" << cf01_uint64_to_hex_str(hash);
+        //if( NULL != guide_rcrd ){
+        //    std::cout << "  guide_rcrd->m_check_index=" << guide_rcrd->m_check_index;
+        //    if( guide_rcrd->m_check_index == hc_chk_depth_rcrd->m_check_index ){
+        //        std::cout << "  prev_hash=" << cf01_uint64_to_hex_str(guide_rcrd->m_hash);
+        //        }
+        //    }
+        //std::cout << "\n";
+        //}
+    
+    
+    if( NULL != curr_run_rcrd ){
+        /* initialize current run record */
+        curr_run_rcrd->m_rcrd_type = CF01_HC_CHK_RCRD_TYPE_DONE_THIS_RUN;
+        curr_run_rcrd->m_time_stamp = now;
+        curr_run_rcrd->m_check_index = hc_chk_depth_rcrd->m_check_index;
+        curr_run_rcrd->m_hash = hash;
+    
+        /* check hash mismatch */
+        if( NULL == guide_rcrd ){
+            /* no previous record */
             curr_run_rcrd->m_mismatch_prev_run = false;
             }
-        else if( guide_rcrd->m_hash == hash ){
-            /* hash matches previous run */
+        else if( guide_rcrd->m_check_index != hc_chk_depth_rcrd->m_check_index ){
+            /* previous record exists, but check index has not reached that record */
+            assert( guide_rcrd->m_check_index > hc_chk_depth_rcrd->m_check_index );
             curr_run_rcrd->m_mismatch_prev_run = false;
             }
         else{
-            /* hash does not match previous run */
-            curr_run_rcrd->m_mismatch_prev_run = true;    
+            /* check index matches */
+            if( CF01_HC_CHK_RCRD_TYPE_DONE_PREV_RUN != guide_rcrd->m_rcrd_type ){
+                /* no previous hash value to check because this is a guide */
+                assert( 0 == guide_rcrd->m_hash );
+                assert( CF01_HC_CHK_RCRD_TYPE_GUIDE == guide_rcrd->m_rcrd_type );
+                curr_run_rcrd->m_mismatch_prev_run = false;
+                }
+            else if( guide_rcrd->m_hash == hash ){
+                /* hash matches previous run */
+                curr_run_rcrd->m_mismatch_prev_run = false;
+                }
+            else{
+                /* hash does not match previous run */
+                curr_run_rcrd->m_mismatch_prev_run = true;    
+                }
+            retire_guide_rcrd = true;
             }
-        retire_guide_rcrd = true;
+    
+        /* save file, line, function name, hash_cmd_str */
+        if( ( curr_run_rcrd->m_mismatch_prev_run ) &&
+            !( ( hc_chk_depth_rcrd->m_first_fail_cmd_info ).m_initialized ) ){
+            ( hc_chk_depth_rcrd->m_first_fail_cmd_info ).init(file_name, line_num,
+                function, hash_cmd_str, curr_run_rcrd->m_check_index );
+            curr_run_rcrd->m_cmd_info =
+                &( hc_chk_depth_rcrd->m_first_fail_cmd_info );
+            }
+        else if( !( ( hc_chk_depth_rcrd->m_misc_cmd_info ).m_initialized ) ){
+            ( hc_chk_depth_rcrd->m_misc_cmd_info ).init(file_name, line_num,
+                function, hash_cmd_str, curr_run_rcrd->m_check_index );
+            curr_run_rcrd->m_cmd_info =
+                &( hc_chk_depth_rcrd->m_misc_cmd_info );
+            }
+        else{
+            assert( NULL == curr_run_rcrd->m_cmd_info );
+            }
+    
+        /* add current record to unpublished list */
+        curr_run_rcrd->m_next = hc_chk_depth_rcrd->m_unpub_rcrds;
+        hc_chk_depth_rcrd->m_unpub_rcrds = curr_run_rcrd;
         }
-
-    /* save file, line, function name, hash_cmd_str */
-    if( ( curr_run_rcrd->m_mismatch_prev_run ) &&
-        !( ( hc_chk_depth_rcrd->m_first_fail_cmd_info ).m_initialized ) ){
-        ( hc_chk_depth_rcrd->m_first_fail_cmd_info ).init(file_name, line_num,
-            function, hash_cmd_str, curr_run_rcrd->m_check_index );
-        curr_run_rcrd->m_cmd_info =
-            &( hc_chk_depth_rcrd->m_first_fail_cmd_info );
+    
+    if( retire_guide_rcrd ){
+        /* retire previous run record */
+        assert( NULL != guide_rcrd );
+        hc_chk_depth_rcrd->m_guide_rcrds = guide_rcrd->m_next;
+        free_hc_chk_rcrd(const_cast<cf01_hc_chk_rcrd *>( guide_rcrd ));
         }
-    else if( !( ( hc_chk_depth_rcrd->m_misc_cmd_info ).m_initialized ) ){
-        ( hc_chk_depth_rcrd->m_misc_cmd_info ).init(file_name, line_num,
-            function, hash_cmd_str, curr_run_rcrd->m_check_index );
-        curr_run_rcrd->m_cmd_info =
-            &( hc_chk_depth_rcrd->m_misc_cmd_info );
+    
+    /* deadline for running next check */
+    hc_chk_depth_rcrd->m_next_check_deadline = calc_next_check_deadline(
+        hc_chk_depth_rcrd->m_check_index, now );
+    
+    /* run next check when index reaches this value */
+    cf01_uint64 next_check_index = calc_next_check_index(
+        hc_chk_depth_rcrd->m_check_index );
+    if( ( NULL != hc_chk_depth_rcrd->m_guide_rcrds ) &&
+        ( hc_chk_depth_rcrd->m_guide_rcrds->m_check_index < next_check_index ) ){
+        next_check_index = hc_chk_depth_rcrd->m_guide_rcrds->m_check_index;
         }
-    else{
-        assert( NULL == curr_run_rcrd->m_cmd_info );
+    hc_chk_depth_rcrd->m_next_check_index = next_check_index;
+    
+    /* publish records to journal */
+    if( now >= m_publish_deadline ){
+        publish_hc_chk_rcrds();
         }
-
-    /* add current record to unpublished list */
-    curr_run_rcrd->m_next = hc_chk_depth_rcrd->m_unpub_rcrds;
-    hc_chk_depth_rcrd->m_unpub_rcrds = curr_run_rcrd;
-    }
-
-if( retire_guide_rcrd ){
-    /* retire previous run record */
-    assert( NULL != guide_rcrd );
-    hc_chk_depth_rcrd->m_guide_rcrds = guide_rcrd->m_next;
-    free_hc_chk_rcrd(const_cast<cf01_hc_chk_rcrd *>( guide_rcrd ));
-    }
-
-/* deadline for running next check */
-hc_chk_depth_rcrd->m_next_check_deadline = calc_next_check_deadline(
-    hc_chk_depth_rcrd->m_check_index, now );
-
-/* run next check when index reaches this value */
-cf01_uint64 next_check_index = calc_next_check_index(
-    hc_chk_depth_rcrd->m_check_index );
-if( ( NULL != hc_chk_depth_rcrd->m_guide_rcrds ) &&
-    ( hc_chk_depth_rcrd->m_guide_rcrds->m_check_index < next_check_index ) ){
-    next_check_index = hc_chk_depth_rcrd->m_guide_rcrds->m_check_index;
-    }
-hc_chk_depth_rcrd->m_next_check_index = next_check_index;
-
-/* publish records to journal */
-if( now >= m_publish_deadline ){
-    publish_hc_chk_rcrds();
     }
 }
 
