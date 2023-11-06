@@ -1,4 +1,4 @@
-cf01 -- C-Flat 01 Library Version 0.3.0
+cf01 -- C-Flat 01 Library Version 0.4.0
 
 
 LICENSE
